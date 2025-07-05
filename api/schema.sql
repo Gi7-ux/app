@@ -1,0 +1,58 @@
+-- USERS TABLE
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role VARCHAR(50) NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE `users`
+ADD COLUMN IF NOT EXISTS `name` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS `company` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS `rate` DECIMAL(10, 2) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS `avatar` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS `phone` VARCHAR(255) DEFAULT NULL;
+
+-- PROJECTS TABLE
+CREATE TABLE IF NOT EXISTS projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    client_id INT NOT NULL,
+    budget DECIMAL(10, 2) DEFAULT NULL,
+    deadline DATE DEFAULT NULL,
+    freelancer_id INT DEFAULT NULL,
+    status VARCHAR(50) DEFAULT 'Open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES users (id),
+    FOREIGN KEY (freelancer_id) REFERENCES users (id)
+);
+
+-- ASSIGNMENTS TABLE
+CREATE TABLE IF NOT EXISTS assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- Update TASKS table to add assignment_id if not exists
+ALTER TABLE tasks
+ADD COLUMN IF NOT EXISTS assignment_id INT DEFAULT NULL;
+
+-- Add FK if not exists
+ALTER TABLE tasks ADD CONSTRAINT IF NOT EXISTS fk_assignment_id FOREIGN KEY (assignment_id) REFERENCES assignments (id);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    link VARCHAR(255),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

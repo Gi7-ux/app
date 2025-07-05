@@ -1,0 +1,10 @@
+/* --- Project Details View --- */
+.project-details-header { margin-bottom: 1rem; }
+.back-btn { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--gray-600); text-decoration: none; margin-bottom: 1rem; font-weight: 500; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; }
+.back-btn:hover { color: var(--gray-900); }
+.project-details-title { font-size: 2rem; margin: 0; }
+
+.project-details-tabs { border-bottom: 1px solid var(--gray-200); margin-bottom: 1.5rem; }
+.tab-btn { background: none; border: none; padding: 1rem; font-size: 0.875rem; font-weight: 600; color: var(--gray-500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab-btn.active { color: var(--sidebar-active-bg); border-color: var(--sidebar-active-bg); }
+.tab-content { padding-top: 1rem; }

@@ -1,0 +1,116 @@
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 60vh; /* Adjust height as needed */
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.chat-window {
+    flex-grow: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background-color: #e5ddd5; /* WhatsApp-like background */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.chat-bubble-wrapper {
+    display: flex;
+    max-width: 75%;
+}
+
+.chat-bubble-wrapper.sent {
+    align-self: flex-end;
+}
+
+.chat-bubble-wrapper.received {
+    align-self: flex-start;
+}
+
+.chat-bubble {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    position: relative;
+}
+
+.chat-bubble-wrapper.sent .chat-bubble {
+    background-color: #dcf8c6; /* Sent message color */
+    border-top-right-radius: 0;
+}
+
+.chat-bubble-wrapper.received .chat-bubble {
+    background-color: var(--white); /* Received message color */
+    border-top-left-radius: 0;
+}
+
+.chat-sender {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--card-teal-icon);
+}
+.chat-bubble-wrapper.received .chat-sender {
+    color: var(--card-orange-icon);
+}
+
+
+.chat-text {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.chat-timestamp {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.chat-input-form {
+    display: flex;
+    padding: 0.75rem;
+    border-top: 1px solid var(--gray-200);
+    background-color: var(--gray-100);
+}
+
+.chat-input {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    margin-right: 0.75rem;
+}
+.chat-input:focus {
+    outline: none;
+    border-color: var(--sidebar-active-bg);
+}
+
+.chat-send-btn {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--sidebar-active-bg);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.chat-send-btn:hover {
+    background-color: var(--action-btn-hover-bg);
+}
+.chat-send-btn .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}

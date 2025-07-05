@@ -1,0 +1,13 @@
+@import './styles/global.css';
+@import './core/Dashboard.css';
+@import './core/LoginScreen.css';
+@import './features/Dashboard/DashboardOverview.css';
+@import './features/UserManagement/UserManagement.css';
+@import './features/UserManagement/components/UserForm.css';
+@import './features/ProjectManagement/ProjectManagement.css';
+@import './features/ProjectManagement/components/ProjectDetailsView.css';
+@import './features/ProjectManagement/components/ProjectForm.css';
+@import './features/ProjectManagement/components/tabs/AssignmentsTab.css';
+@import './features/ProjectManagement/components/tabs/FilesTab.css';
+@import './features/ProjectManagement/components/tabs/MessagesTab.css';
+@import './features/ProjectManagement/components/tabs/ProjectDetailsOverview.css';
