@@ -24,6 +24,7 @@ $query = "SELECT
             f.name as freelancerName, 
             p.status, 
             p.budget,
+            p.spend, -- Added spend
             p.deadline
           FROM 
             projects p
@@ -48,6 +49,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         "freelancerName" => $freelancerName,
         "status" => $status,
         "budget" => $budget,
+        "spend" => $spend ?? 0, // Default to 0 if spend is null
         "deadline" => $deadline
     );
     array_push($projects_arr["records"], $project_item);

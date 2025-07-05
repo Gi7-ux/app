@@ -121,14 +121,20 @@ export const ProjectManagement = () => {
             } else {
                 url = '/api/projects/create.php';
                 method = 'POST';
-                // Only send required fields for creation
                 payload = {
                     title: formData.title,
-                    client_id: formData.client_id || formData.clientId,
-                    budget: formData.budget,
                     description: formData.description,
-                    deadline: formData.deadline
+                    client_id: formData.client_id || formData.clientId, // Ensure client_id is used
+                    budget: formData.budget,
+                    deadline: formData.deadline,
+                    freelancer_id: formData.freelancer_id || formData.freelancerId, // Ensure freelancer_id is used
+                    status: formData.status || 'Open', // Default to 'Open' if not set
+                    purchased_hours: formData.purchased_hours || formData.purchasedHours || 0
                 };
+                 // Remove null/undefined freelancer_id if it wasn't set
+                if (!payload.freelancer_id) {
+                    delete payload.freelancer_id;
+                }
             }
             const response = await fetch(url, {
                 method,
@@ -141,13 +147,66 @@ export const ProjectManagement = () => {
             }
             const data = await response.json();
             if (response.ok) {
-                fetchProjects();
+                const savedProjectId = editingProject ? editingProject.id : data.id; // If creating, API should return new ID
+
+                // --- Handle Skills ---
+                if (savedProjectId && formData.skills !== undefined) {
+                    const currentSkills = formData.skills || [];
+                    const originalSkills = formData.original_skills || []; // Passed from ProjectForm
+
+                    const skillsToAdd = currentSkills.filter(s => !originalSkills.includes(s));
+                    const skillsToRemove = originalSkills.filter(s => !currentSkills.includes(s));
+
+                    const skillPromises = [];
+
+                    skillsToAdd.forEach(skillName => {
+                        skillPromises.push(
+                            fetch('/api/projects/skills/add.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ project_id: savedProjectId, skill_name: skillName })
+                            }).then(res => res.json().then(d => ({ok: res.ok, ...d}))) // Combine ok status with json data
+                        );
+                    });
+
+                    skillsToRemove.forEach(skillName => {
+                        skillPromises.push(
+                            fetch('/api/projects/skills/remove.php', {
+                                method: 'POST', // Or DELETE, ensure API supports it
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ project_id: savedProjectId, skill_name: skillName })
+                            }).then(res => res.json().then(d => ({ok: res.ok, ...d})))
+                        );
+                    });
+
+                    try {
+                        const skillResults = await Promise.all(skillPromises);
+                        const skillErrors = skillResults.filter(res => !res.ok);
+                        if (skillErrors.length > 0) {
+                            const errorMessages = skillErrors.map(e => e.message || `Failed to update skill.`).join('; ');
+                            // Append to main error or show separate skill error
+                            setError(prevError => prevError ? `${prevError} Some skill updates failed: ${errorMessages}` : `Some skill updates failed: ${errorMessages}`);
+                        }
+                    } catch (skillError) {
+                         setError(prevError => prevError ? `${prevError} Error processing skills: ${skillError.message}` : `Error processing skills: ${skillError.message}`);
+                    }
+                }
+                // --- End Handle Skills ---
+
+                fetchProjects(); // Refresh project list (which now includes skills if read_one.php is called by details view)
                 setIsModalOpen(false);
+                if (view === 'details' && selectedProjectId === savedProjectId) {
+                    // If currently viewing details of the saved project, refresh that specific view too
+                    // This might require ProjectDetailsView to have its own fetch on prop change or a dedicated refresh function
+                    // For now, fetchProjects() will update the list, and if user re-enters details view, it will be fresh.
+                    // Or, if onUpdateProject is passed to ProjectDetailsView, it can be called here.
+                }
+
             } else {
                 setError(data.message || 'Failed to save project.');
             }
-        } catch {
-            setError('An error occurred while saving project.');
+        } catch (err) {
+            setError(`An error occurred while saving project: ${err.message}`);
         }
     };
 

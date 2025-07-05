@@ -78,11 +78,15 @@ function ProjectForm({ project, onSave, onCancel, clients, freelancers }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({
+        const payload = {
             ...formData,
             client_id: formData.clientId,
             freelancer_id: formData.freelancerId
-        });
+        };
+        if (project && project.skills) { // If editing, pass original skills for diffing
+            payload.original_skills = project.skills;
+        }
+        onSave(payload);
     };
 
     return (
