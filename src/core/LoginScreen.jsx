@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom'; // Import Link
+import { ForgotPasswordForm } from '../components/ForgotPasswordForm.jsx';
 
 export const LoginScreen = ({ onLogin }) => {
     const [role, setRole] = useState('admin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -20,7 +23,8 @@ export const LoginScreen = ({ onLogin }) => {
             const data = await response.json();
 
             if (response.ok) {
-                onLogin(data.role, data.token);
+                // The login API now returns access_token and refresh_token
+                onLogin(data.role, data.access_token, data.refresh_token);
             } else {
                 setError(data.message || 'Login failed.');
             }
@@ -69,8 +73,28 @@ export const LoginScreen = ({ onLogin }) => {
                 </div>
                 {error && <p style={{ color: 'red', fontSize: '0.875rem' }}>{error}</p>}
                 <button type="submit" className="login-btn">Sign In as {role.charAt(0).toUpperCase() + role.slice(1)}</button>
-                <p className="signup-link">Don&apos;t have an account? <a href="/signup">Sign up</a></p>
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(prev => !prev)}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                        {showForgotPassword ? 'Back to Login' : 'Forgot Password?'}
+                    </button>
+                </div>
+                <p className="signup-link" style={{ marginTop: '0.5rem' }}>Don&apos;t have an account? <Link to="/register">Sign up</Link></p>
             </form>
+            {showForgotPassword && (
+                <div className="login-box" style={{ marginTop: '1rem' }}> {/* Use login-box style for consistency */}
+                    <ForgotPasswordForm
+                        onCancel={() => setShowForgotPassword(false)}
+                        onSubmitted={() => {
+                            // Optionally keep the form open and show success message, or hide it
+                            // For now, let's keep it simple and let the form handle its own messages
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
 };
