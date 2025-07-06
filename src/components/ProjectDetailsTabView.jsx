@@ -16,6 +16,10 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
         deadline: project?.deadline ? project.deadline.split('T')[0] : '',
         status: project?.status || 'Open',
     });
+    const [quickTaskData, setQuickTaskData] = useState({
+        title: '',
+        description: ''
+    });
 
     // Get additional project data if needed
     useEffect(() => {
@@ -116,10 +120,14 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'budget' ? parseFloat(value) : value
-        }));
+        setFormData(prev => {
+            if (name === 'budget') {
+                const parsedValue = parseFloat(value);
+                // If the parsed value is NaN (e.g., empty string or invalid input), set it to 0
+                return { ...prev, [name]: isNaN(parsedValue) ? 0 : parsedValue };
+            }
+            return { ...prev, [name]: value };
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -221,6 +229,60 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
         }
     };
 
+    const handleCreateTask = async () => {
+        // Validate task data
+        if (!quickTaskData.title.trim()) {
+            setError('Task title is required');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                setError('You are not authenticated. Please log in to create tasks.');
+                setLoading(false);
+                return;
+            }
+
+            const response = await fetch('/api/assignments/save.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    project_id: project.id,
+                    title: quickTaskData.title,
+                    description: quickTaskData.description
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update the project with the new task
+                setProject(prevProject => ({
+                    ...prevProject,
+                    assignments: [...(prevProject.assignments || []), data]
+                }));
+
+                // Clear the form after successful submission
+                setQuickTaskData({ title: '', description: '' });
+                setError('Task created successfully!'); // Using error state for success message temporarily
+            } else {
+                setError(data.message || 'Failed to create task.');
+            }
+        } catch (err) {
+            setError('An error occurred while creating the task.');
+            console.error('Error creating task:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const tabs = [
         { id: 'details', label: 'Details' },
         { id: 'tasks', label: 'Tasks' },
@@ -259,7 +321,7 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
                         <div className="skills-section tab-section">
                             <div className="tab-section-header">Skills Required:</div>
                             <div className="skills-container tab-section-content">
-                                {project.skills && project.skills.length > 0 ? (
+                                {Array.isArray(project.skills) && project.skills.length > 0 ? (
                                     project.skills.map(skill => <span key={skill} className="skill-tag">{skill}</span>)
                                 ) : (
                                     <p>No skills specified.</p>
@@ -316,7 +378,7 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
                             <div className="tab-section-content">
                                 <div><strong>Client:</strong> {project.clientName || 'Not assigned'}</div>
                                 <div><strong>Freelancer:</strong> {project.freelancerName || 'Not assigned'}</div>
-                                <div><strong>Created:</strong> {new Date(project.created_at || Date.now()).toLocaleDateString()}</div>
+                                <div><strong>Created:</strong> {project.created_at ? new Date(project.created_at).toLocaleDateString() : 'Unknown'}</div>
                             </div>
                         </div>
 
@@ -386,13 +448,30 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
                         <div className="tab-section-content">
                             <div className="form-group">
                                 <label htmlFor="task-title">Task Title</label>
-                                <input type="text" id="task-title" placeholder="Enter task title" />
+                                <input
+                                    type="text"
+                                    id="task-title"
+                                    placeholder="Enter task title"
+                                    value={quickTaskData.title}
+                                    onChange={(e) => setQuickTaskData({ ...quickTaskData, title: e.target.value })}
+                                />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="task-description">Description</label>
-                                <textarea id="task-description" placeholder="Enter task description"></textarea>
+                                <textarea
+                                    id="task-description"
+                                    placeholder="Enter task description"
+                                    value={quickTaskData.description}
+                                    onChange={(e) => setQuickTaskData({ ...quickTaskData, description: e.target.value })}
+                                ></textarea>
                             </div>
-                            <button className="btn-primary">Create Task</button>
+                            <button
+                                className="btn-primary"
+                                onClick={handleCreateTask}
+                                disabled={loading || !quickTaskData.title.trim()}
+                            >
+                                {loading ? 'Creating...' : 'Create Task'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -580,8 +659,8 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
         }
     };
 
-    if (loading && !project) return <div className="loading-indicator">Loading project details...</div>;
-    if (error && !project) return <div className="error-message">{error}</div>;
+    if (loading) return <div className="loading-indicator">Loading project details...</div>;
+    if (error) return <div className="error-message">{error}</div>;
     if (!project) return null;
 
     return (

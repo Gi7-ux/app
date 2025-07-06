@@ -1,27 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ProjectDetailsModal.css';
 import { ICONS } from '../assets/icons';
 
 const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTasks }) => {
     if (!project) return null;
 
-    // Mock data for pending applications as it's not in the API
-    const pendingApplications = [
-        {
-            id: 1,
-            freelancerName: 'Bob Builder',
-            freelancerHandle: 'freelancer2',
-            bid: 12000,
-            note: 'I am proficient in CAD and have a quick turnaround for schematic designs. My bid is competitive.'
-        },
-        {
-            id: 2,
-            freelancerName: 'Alice Architect',
-            freelancerHandle: 'freelancer1',
-            bid: 14000,
-            note: 'My expertise in sustainable kitchen design and modern aesthetics aligns perfectly with the project needs.'
+    const [pendingApplications, setPendingApplications] = useState([]);
+    const [loadingApplications, setLoadingApplications] = useState(true);
+    const [errorApplications, setErrorApplications] = useState(null);
+
+    useEffect(() => {
+        if (!project || !project.id) {
+            setLoadingApplications(false);
+            return;
         }
-    ];
+
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+        const isMounted = useRef(true);
+
+        const fetchApplications = async () => {
+            try {
+                if (isMounted.current) setLoadingApplications(true);
+                if (isMounted.current) setErrorApplications(null);
+                // Assuming an API endpoint like /api/projects/{projectId}/applications
+                const response = await fetch(`/api/projects/${project.id}/applications`, { signal });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (isMounted.current) setPendingApplications(data);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Fetch aborted');
+                } else {
+                    console.error("Error fetching pending applications:", error);
+                    if (isMounted.current) setErrorApplications(error);
+                }
+            } finally {
+                if (isMounted.current) setLoadingApplications(false);
+            }
+        };
+
+        fetchApplications();
+
+        return () => {
+            isMounted.current = false;
+            abortController.abort();
+        };
+    }, [project, project.id]);
 
     const handleAccept = (application) => {
         console.log('Accepted application:', application);
@@ -80,16 +107,24 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
 
                     <div className="applications-section">
                         <h3>Pending Applications ({pendingApplications.length})</h3>
-                        {pendingApplications.map(app => (
-                            <div key={app.id} className="application-card">
-                                <div className="application-header">
-                                    <strong>{app.freelancerName}</strong> ({app.freelancerHandle})
-                                    <span className="bid">Bid: R {app.bid.toLocaleString()}</span>
+                        {loadingApplications ? (
+                            <p>Loading applications...</p>
+                        ) : errorApplications ? (
+                            <p className="error-message">Error loading applications: {errorApplications.message}</p>
+                        ) : pendingApplications.length > 0 ? (
+                            pendingApplications.map(app => (
+                                <div key={app.id} className="application-card">
+                                    <div className="application-header">
+                                        <strong>{app.freelancerName}</strong> ({app.freelancerHandle})
+                                        <span className="bid">Bid: R {app.bid.toLocaleString()}</span>
+                                    </div>
+                                    <p>"{app.note}"</p>
+                                    <button className="accept-btn" onClick={() => handleAccept(app)}>{ICONS.accept} Accept Application</button>
                                 </div>
-                                <p>"{app.note}"</p>
-                                <button className="accept-btn" onClick={() => handleAccept(app)}>{ICONS.accept} Accept Application</button>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p>No pending applications.</p>
+                        )}
                     </div>
                 </div>
                 <div className="modal-footer">

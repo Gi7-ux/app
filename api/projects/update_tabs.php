@@ -2,49 +2,80 @@
 // api/projects/update_tabs.php
 
 // Required headers
-header("Access-Control-Allow-Origin: *");
+// Set CORS headers based on allowed origins
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    $origin = $_SERVER['HTTP_ORIGIN'];
+    $allowed_origins = unserialize(ALLOWED_ORIGINS);
+    if (in_array($origin, $allowed_origins)) {
+        header("Access-Control-Allow-Origin: " . $origin);
+    }
+}
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 require_once '../core/database.php';
+require_once '../core/utils.php';
 require_once '../core/config.php';
 require_once '../vendor/autoload.php';
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
 
+// Database connection
 $database = new Database();
 $db = $database->connect();
 
 // Get posted data
 $data = json_decode(file_get_contents("php://input"));
 
-$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-$arr = explode(" ", $authHeader);
-$jwt = $arr[1] ?? '';
+// Token validation
+function validate_token() {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (empty($authHeader) && !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
 
-if ($jwt) {
+    if (empty($authHeader)) {
+        http_response_code(401);
+        echo json_encode(array("message" => "Access denied. Authorization header not found."));
+        exit();
+    }
+
+    if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        http_response_code(401);
+        echo json_encode(array("message" => "Access denied. Invalid Authorization header format."));
+        exit();
+    }
+
+    $jwt = $matches[1];
+
+    if (empty($jwt)) {
+        http_response_code(401);
+        echo json_encode(array("message" => "Access denied. Token not found."));
+        exit();
+    }
+
     try {
         $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
-        $user_id = $decoded->data->id;
-        $is_admin = ($decoded->data->role === 'admin');
+        return $decoded->data;
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode(array("message" => "Access denied.", "error" => $e->getMessage()));
+        exit();
+    }
+}
 
-        // Validate required fields
-        if (
-            empty($data->id) ||
-            empty($data->title) || 
-            empty($data->description)
-        ) {
+// Validate and update project
+function updateProject($db, $data, $user_id, $is_admin) {
+    try {
+        if (empty($data->id) || empty($data->title) || empty($data->description)) {
             http_response_code(400);
-            echo json_encode([
-                "message" => "Project update failed. Required fields are missing."
-            ]);
+            echo json_encode(array("message" => "Project update failed. Required fields are missing."));
             exit();
         }
 
-        // Prepare query - admin can update all projects, regular users only their own
         $sql = "UPDATE projects 
                 SET 
                     title = :title,
@@ -54,16 +85,12 @@ if ($jwt) {
                     status = :status
                 WHERE 
                     id = :id";
-                    
-        // If not admin, ensure user can only update their projects
+
         if (!$is_admin) {
             $sql .= " AND (client_id = :user_id OR freelancer_id = :user_id)";
         }
 
-        // Prepare statement
         $stmt = $db->prepare($sql);
-
-        // Bind values
         $stmt->bindParam(":id", $data->id);
         $stmt->bindParam(":title", $data->title);
         $stmt->bindParam(":description", $data->description);
@@ -75,129 +102,121 @@ if ($jwt) {
             $stmt->bindParam(":user_id", $user_id);
         }
 
-        // Execute query
         if ($stmt->execute()) {
-            // Update was successful, now get the updated project data to return
-            $sql = "SELECT 
-                        p.*,
-                        c.email as clientName,
-                        CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE f.email END as freelancerName,
-                        COALESCE(SUM(tl.hours), 0) as total_hours_logged,
-                        COALESCE(SUM(tl.hours * f.rate), 0) as spend
-                    FROM 
-                        projects p
-                    LEFT JOIN 
-                        users c ON p.client_id = c.id
-                    LEFT JOIN 
-                        users f ON p.freelancer_id = f.id
-                    LEFT JOIN 
-                        time_logs tl ON p.id = tl.project_id
-                    WHERE 
-                        p.id = :id
-                    GROUP BY 
-                        p.id";
-            
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(":id", $data->id);
-            $stmt->execute();
-            
-            if ($stmt->rowCount() > 0) {
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                // Check if the project_skills table and column exists before querying
-                try {
-                    $check_table_query = "SHOW TABLES LIKE 'project_skills'";
-                    $check_table_stmt = $db->prepare($check_table_query);
-                    $check_table_stmt->execute();
-                    
-                    $skills = [];
-                    if ($check_table_stmt->rowCount() > 0) {
-                        // Table exists, check if the column exists
-                        $check_column_query = "SHOW COLUMNS FROM project_skills LIKE 'skill_name'";
-                        $check_column_stmt = $db->prepare($check_column_query);
-                        $check_column_stmt->execute();
-                        
-                        if ($check_column_stmt->rowCount() > 0) {
-                            // Column exists, proceed with query
-                            $skills_query = "SELECT skill_name FROM project_skills WHERE project_id = ?";
-                            $skills_stmt = $db->prepare($skills_query);
-                            $skills_stmt->execute([$data->id]);
-                            
-                            while ($skill_row = $skills_stmt->fetch(PDO::FETCH_ASSOC)) {
-                                $skills[] = $skill_row['skill_name'];
-                            }
-                        }
-                    }
-                    $row['skills'] = $skills;
-                } catch (PDOException $e) {
-                    // If there's any error, just set an empty skills array
-                    $row['skills'] = [];
-                    file_put_contents('../logs/debug.log', "Skills query error: " . $e->getMessage() . "\n", FILE_APPEND);
-                }
-                
-                // Get assignments with error handling
-                try {
-                    // First, check if the assignments table exists
-                    $check_table_query = "SHOW TABLES LIKE 'assignments'";
-                    $check_table_stmt = $db->prepare($check_table_query);
-                    $check_table_stmt->execute();
-                    
-                    $assignments = [];
-                    if ($check_table_stmt->rowCount() > 0) {
-                        // Check if the assignments table has a title column
-                        $check_column_query = "SHOW COLUMNS FROM assignments LIKE 'title'";
-                        $check_column_stmt = $db->prepare($check_column_query);
-                        $check_column_stmt->execute();
-                        
-                        if ($check_column_stmt->rowCount() > 0) {
-                            // Column exists, use it in query
-                            $assignments_query = "SELECT id, title, project_id, user_id, assigned_at FROM assignments WHERE project_id = ?";
-                        } else {
-                            // Column doesn't exist, get basic fields
-                            $assignments_query = "SELECT id, project_id, user_id, assigned_at FROM assignments WHERE project_id = ?";
-                        }
-                        
-                        $assignments_stmt = $db->prepare($assignments_query);
-                        $assignments_stmt->execute([$data->id]);
-                        
-                        while ($assignment_row = $assignments_stmt->fetch(PDO::FETCH_ASSOC)) {
-                            // If title doesn't exist, provide a default
-                            if (!isset($assignment_row['title'])) {
-                                $assignment_row['title'] = "Task #" . $assignment_row['id'];
-                            }
-                            $assignments[] = $assignment_row;
-                        }
-                    }
-                    $row['assignments'] = $assignments;
-                } catch (PDOException $e) {
-                    // If there's any error, just set an empty assignments array
-                    $row['assignments'] = [];
-                    file_put_contents('../logs/debug.log', "Assignments query error: " . $e->getMessage() . "\n", FILE_APPEND);
-                }
-                
-                http_response_code(200);
-                echo json_encode($row);
-            } else {
-                http_response_code(404);
-                echo json_encode([
-                    "message" => "Project not found after update."
-                ]);
-            }
+            return true;  // Successful update
         } else {
-            http_response_code(503);
-            echo json_encode([
-                "message" => "Unable to update project."
-            ]);
+            throw new Exception("Unable to update project.");
         }
-    } catch (Exception $e) {
-        http_response_code(401);
-        echo json_encode(array(
-            "message" => "Access denied.",
-            "error" => $e->getMessage()
-        ));
+    } catch (\Throwable $e) {
+        http_response_code(503);
+        echo json_encode(array("message" => "Unable to update project.", "error" => $e->getMessage()));
+        exit();
     }
-} else {
-    http_response_code(401);
-    echo json_encode(array("message" => "Access denied. No token provided."));
+    return false;
+}
+
+// Fetch project details including client and freelancer info
+function fetchProjectDetails($db, $projectId) {
+    $sql = "SELECT 
+                p.*,
+                c.email as clientEmail,
+                CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE f.email END as freelancerEmail,
+                COALESCE(SUM(tl.hours), 0) as total_hours_logged,
+                COALESCE(SUM(tl.hours * f.rate), 0) as spend
+            FROM 
+                projects p
+            LEFT JOIN 
+                users c ON p.client_id = c.id
+            LEFT JOIN 
+                users f ON p.freelancer_id = f.id
+            LEFT JOIN 
+                time_logs tl ON p.id = tl.project_id
+            WHERE 
+                p.id = :projectId
+            GROUP BY 
+                p.id";
+
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(":projectId", $projectId);
+    $stmt->execute();
+
+    if ($stmt->rowCount() > 0) {
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        http_response_code(404);
+        echo json_encode(array("message" => "Project not found after update."));
+        exit();
+    }
+}
+
+// Fetch skills associated with the project
+function fetchProjectSkills($db, $projectId) {
+    $skills = [];
+
+    if (table_exists($db, 'project_skills') && column_exists($db, 'project_skills', 'skill_name')) {
+        $skills_query = "SELECT skill_name FROM project_skills WHERE project_id = :projectId";
+        $skills_stmt = $db->prepare($skills_query);
+        $skills_stmt->bindParam(":projectId", $projectId);
+        $skills_stmt->execute();
+
+        while ($skill_row = $skills_stmt->fetch(PDO::FETCH_ASSOC)) {
+            $skills[] = $skill_row['skill_name'];
+        }
+    }
+
+    return $skills;
+}
+
+// Fetch assignments for the project
+function fetchAssignments($db, $projectId) {
+    $assignments = [];
+
+    if (table_exists($db, 'assignments')) {
+        $columns_sql = "SHOW COLUMNS FROM assignments";
+        $columns_stmt = $db->query($columns_sql);
+        $columns = $columns_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (in_array('title', $columns)) {
+            $assignments_query = "SELECT id, title, project_id, user_id, assigned_at FROM assignments WHERE project_id = :projectId";
+        } else {
+            $assignments_query = "SELECT id, project_id, user_id, assigned_at FROM assignments WHERE project_id = :projectId";
+        }
+
+        $assignments_stmt = $db->prepare($assignments_query);
+        $assignments_stmt->bindParam(":projectId", $projectId);
+        $assignments_stmt->execute();
+
+        while ($assignment_row = $assignments_stmt->fetch(PDO::FETCH_ASSOC)) {
+            $assignments[] = $assignment_row;
+        }
+    }
+
+    return $assignments;
+}
+
+// Ensure all data is correctly fetched and returned
+function collectResult($db, $projectId) {
+    try {
+        $project = fetchProjectDetails($db, $projectId);
+        $project['skills'] = fetchProjectSkills($db, $projectId);
+        $project['assignments'] = fetchAssignments($db, $projectId);
+
+        http_response_code(200);
+        echo json_encode($project);
+    } catch (\Throwable $e) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Failed to collect project details.", "error" => $e->getMessage()));
+    }
+}
+
+// Main workflow
+try {
+    $decoded_data = validate_token();
+    if (updateProject($db, $data, $decoded_data->id, isset($decoded_data->role) && $decoded_data->role === 'admin')) {
+        collectResult($db, $data->id);
+    }
+} catch (\Throwable $e) {
+    http_response_code(500);
+    echo json_encode(array("message" => "Failed to process request.", "error" => $e->getMessage()));
 }
 ?>

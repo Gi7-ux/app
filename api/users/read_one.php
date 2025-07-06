@@ -4,6 +4,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once '../core/database.php';
 require_once '../core/utils.php';
+require_once '../migrations/run_migrations.php';
 
 $database = new Database();
 $db = $database->connect();

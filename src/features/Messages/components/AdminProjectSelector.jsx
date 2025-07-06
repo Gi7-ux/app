@@ -16,7 +16,7 @@ export const AdminProjectSelector = ({ projects, threads, onSelectThread, active
             <h1>Project Threads</h1>
         </div>
         <div className="conversation-items" style={{ overflowY: 'auto', flexGrow: 1 }}>
-            {projects.map(project => {
+            {projects && projects.map(project => {
                 const projectThreads = threads.filter(t => t.projectId === project.id);
                 return (
                     <div key={project.id} style={{padding: '1rem 1.5rem', borderBottom: '1px solid var(--gray-200)'}}>

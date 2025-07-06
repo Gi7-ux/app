@@ -7,6 +7,7 @@ import { AdminProjectSelector } from './AdminProjectSelector.jsx';
 
 export const MessagingContainer = ({ currentUser, projectId = null }) => { // Added projectId prop
     const [threads, setThreads] = useState([]);
+    const [projects, setProjects] = useState([]); // New state for projects
     const [activeThread, setActiveThread] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,30 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
         } catch (err) {
             setError('An error occurred while fetching threads.');
             console.error('An error occurred while fetching threads:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // New function to fetch projects
+    const fetchProjects = async () => {
+        setIsLoading(true); setError('');
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch('/api/projects/read.php', { // Assuming read.php fetches all projects
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 401) { window.location.href = '/login'; return; }
+            const data = await response.json();
+            if (response.ok) {
+                setProjects(data.records || []); // Assuming data has a 'records' key
+            } else {
+                setError(data.message || 'Failed to fetch projects.');
+                console.error(data.message || 'Failed to fetch projects.');
+            }
+        } catch (err) {
+            setError('An error occurred while fetching projects.');
+            console.error('An error occurred while fetching projects:', err);
         } finally {
             setIsLoading(false);
         }
@@ -131,8 +156,11 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
             ensureAndFetchProjectThreads(); // This will also set an activeThread
         } else {
             fetchUserThreads(); // General messaging page
+            if (currentUser.role === 'admin') { // Only fetch projects if admin and not in project context
+                fetchProjects();
+            }
         }
-    }, [projectId, currentUser.id]); // Re-run if projectId changes or user changes
+    }, [projectId, currentUser.id, currentUser.role]); // Re-run if projectId changes or user changes, or role changes
 
     useEffect(() => {
         // This effect now primarily relies on activeThread being set by the thread fetching logic.
@@ -252,8 +280,8 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
     return (
         <div className="messages-page" style={{ display: 'flex', height: '100%', maxHeight: 'calc(100vh - 150px)', background: 'var(--white)', borderRadius: '0.75rem', border: '1px solid var(--gray-200)', overflow: 'hidden' }}>
             {showConversationList && (currentUser.role === 'admin' && !projectId) && (
-                 <AdminProjectSelector /* This component might need rework if not used on a general admin page */
-                    // projects={mockData.projectManagement.projects} // TODO: Fetch real projects if this selector is used
+                 <AdminProjectSelector
+                    projects={projects} // Pass fetched projects
                     threads={threads} // All threads for admin
                     onSelectThread={handleSelectThread}
                     activeThreadId={activeThread?.id}

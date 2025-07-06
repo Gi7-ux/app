@@ -1,3 +1,32 @@
+:root {
+    --primary-background-light: #e6f7f7;
+    --primary-border-light: #d1e9e9;
+    --primary-color-dark: #0d5e5e;
+    --secondary-background-light: #f8f9fa;
+    --text-color-dark: #555;
+    --text-color-darker: #333;
+    --border-color-light: #eee;
+    --skill-tag-background: #d4eefc;
+    --skill-tag-color: #1a73e8;
+    --success-color: #28a745;
+    --success-hover-color: #218838;
+    --white-color: white;
+    --secondary-button-background: #6c757d;
+    --secondary-button-hover-background: #5a6268;
+    --primary-button-background: #007bff;
+    --primary-button-hover-background: #0069d9;
+    --status-open-background: #dcfce7;
+    --status-open-color: #166534;
+    --status-in-progress-background: #fef9c3;
+    --status-in-progress-color: #854d0e;
+    --status-pending-approval-background: #ffedd5;
+    --status-pending-approval-color: #9a3412;
+    --status-completed-background: #dbeafe;
+    --status-completed-color: #1e40af;
+    --status-archived-background: #e5e7eb;
+    --status-archived-color: #4b5563;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -13,7 +42,7 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--white-color);
     border-radius: 8px;
     width: 90%;
     max-width: 800px;
@@ -28,14 +57,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    background-color: #e6f7f7;
-    border-bottom: 1px solid #d1e9e9;
+    background-color: var(--primary-background-light);
+    border-bottom: 1px solid var(--primary-border-light);
 }
 
 .modal-header h2 {
     margin: 0;
     font-size: 1.15rem;
-    color: #0d5e5e;
+    color: var(--primary-color-dark);
     font-weight: 600;
 }
 
@@ -44,7 +73,7 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #0d5e5e;
+    color: var(--primary-color-dark);
 }
 
 .modal-body {
@@ -71,7 +100,7 @@
 
 .details-grid>div {
     font-size: 0.9rem;
-    background-color: #f8f9fa;
+    background-color: var(--secondary-background-light);
     padding: 0.75rem;
     border-radius: 4px;
 }
@@ -79,7 +108,7 @@
 .details-grid>div strong {
     display: block;
     margin-bottom: 0.25rem;
-    color: #555;
+    color: var(--text-color-dark);
 }
 
 .columns-container {
@@ -90,7 +119,7 @@
 }
 
 .column {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-background-light);
     padding: 1rem;
     border-radius: 4px;
 }
@@ -103,9 +132,9 @@
 
 h3 {
     font-size: 1rem;
-    color: #333;
+    color: var(--text-color-darker);
     margin-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color-light);
     padding-bottom: 0.75rem;
     font-weight: 600;
 }
@@ -117,8 +146,8 @@ h3 {
 }
 
 .skill-tag {
-    background-color: #d4eefc;
-    color: #1a73e8;
+    background-color: var(--skill-tag-background);
+    color: var(--skill-tag-color);
     padding: 0.3rem 0.8rem;
     border-radius: 16px;
     font-size: 0.8rem;
@@ -133,15 +162,15 @@ h3 {
 
 .tasks-section li {
     margin-bottom: 0.5rem;
-    color: #333;
-    background-color: #f8f9fa;
+    color: var(--text-color-darker);
+    background-color: var(--secondary-background-light);
     padding: 0.75rem;
     border-radius: 4px;
 }
 
 .application-card {
-    background-color: #f8f9fa;
-    border-left: 3px solid #28a745;
+    background-color: var(--secondary-background-light);
+    border-left: 3px solid var(--success-color);
     padding: 1rem;
     border-radius: 4px;
     margin-bottom: 1rem;
@@ -165,19 +194,19 @@ h3 {
 
 .application-header .bid {
     font-weight: 600;
-    color: #333;
+    color: var(--text-color-darker);
     white-space: nowrap;
 }
 
 .application-card p {
     margin: 0 0 1rem 0;
     font-style: italic;
-    color: #555;
+    color: var(--text-color-dark);
 }
 
 .accept-btn {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--success-color);
+    color: var(--white-color);
     border: none;
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
@@ -192,15 +221,15 @@ h3 {
 }
 
 .accept-btn:hover {
-    background-color: #218838;
+    background-color: var(--success-hover-color);
 }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     padding: 1rem 1.5rem;
-    border-top: 1px solid #eee;
-    background-color: #f8f9fa;
+    border-top: 1px solid var(--border-color-light);
+    background-color: var(--secondary-background-light);
 }
 
 .btn-secondary,
@@ -213,22 +242,22 @@ h3 {
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    color: white;
+    background-color: var(--secondary-button-background);
+    color: var(--white-color);
     margin-right: 0.75rem;
 }
 
 .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: var(--secondary-button-hover-background);
 }
 
 .btn-primary {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--primary-button-background);
+    color: var(--white-color);
 }
 
 .btn-primary:hover {
-    background-color: #0069d9;
+    background-color: var(--primary-button-hover-background);
 }
 
 .status-pill {
@@ -242,26 +271,26 @@ h3 {
 }
 
 .status-Open {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: var(--status-open-background);
+    color: var(--status-open-color);
 }
 
 .status-In\.Progress {
-    background-color: #fef9c3;
-    color: #854d0e;
+    background-color: var(--status-in-progress-background);
+    color: var(--status-in-progress-color);
 }
 
 .status-Pending\.Approval {
-    background-color: #ffedd5;
-    color: #9a3412;
+    background-color: var(--status-pending-approval-background);
+    color: var(--status-pending-approval-color);
 }
 
 .status-Completed {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: var(--status-completed-background);
+    color: var(--status-completed-color);
 }
 
 .status-Archived {
-    background-color: #e5e7eb;
-    color: #4b5563;
+    background-color: var(--status-archived-background);
+    color: var(--status-archived-color);
 }

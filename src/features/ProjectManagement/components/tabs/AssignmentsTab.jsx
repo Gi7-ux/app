@@ -88,28 +88,51 @@ export const AssignmentsTab = ({ project }) => {
 
     useEffect(() => {
         const fetchAssignments = async () => {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) setAssignments(await response.json());
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    setAssignments(await response.json());
+                } else {
+                    console.error('Failed to fetch assignments:', response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching assignments:', error);
+            }
         };
         fetchAssignments();
         // TODO: Fetch freelancers from API if needed
     }, [project.id]);
 
     const saveAssignment = async (assignment) => {
-        const token = localStorage.getItem('access_token');
-        await fetch('/api/assignments/save.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ ...assignment, project_id: project.id })
-        });
-        // Re-fetch assignments
-        const response = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) setAssignments(await response.json());
+        try {
+            const token = localStorage.getItem('access_token');
+            const saveResponse = await fetch('/api/assignments/save.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ ...assignment, project_id: project.id })
+            });
+
+            if (!saveResponse.ok) {
+                console.error('Failed to save assignment:', saveResponse.status, saveResponse.statusText);
+                return;
+            }
+
+            // Re-fetch assignments
+            const fetchResponse = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (fetchResponse.ok) {
+                setAssignments(await fetchResponse.json());
+            } else {
+                console.error('Failed to re-fetch assignments after save:', fetchResponse.status, fetchResponse.statusText);
+            }
+        } catch (error) {
+            console.error('Error in saveAssignment:', error);
+        }
     };
 
     const handleUpdateAssignment = (updatedAssignment) => saveAssignment(updatedAssignment);

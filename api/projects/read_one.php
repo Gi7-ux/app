@@ -5,6 +5,7 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once '../core/database.php';
 require_once '../core/config.php';
 require_once '../vendor/autoload.php';
+require_once '../migrations/run_migrations.php';
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
@@ -39,8 +40,6 @@ $jwt = $arr[1] ?? '';
 if ($jwt) {
     try {
         // Add detailed JWT debugging
-        file_put_contents('../logs/debug.log', "JWT Token Processing - Token: " . substr($jwt, 0, 20) . "...\n", FILE_APPEND);
-        file_put_contents('../logs/debug.log', "JWT Secret: " . substr(JWT_SECRET, 0, 5) . "...\n", FILE_APPEND);
         
         // Try to decode the JWT
         $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
@@ -65,8 +64,8 @@ if ($jwt) {
                   p.budget, 
                   p.deadline, 
                   p.created_at,
-                  c.email as clientName,
-                  CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE f.email END as freelancerName
+                  IFNULL(c.name, c.email) as clientName,
+                  CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE IFNULL(f.name, f.email) END as freelancerName
                   FROM projects p
                   JOIN users c ON p.client_id = c.id
                   LEFT JOIN users f ON p.freelancer_id = f.id

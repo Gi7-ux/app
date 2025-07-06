@@ -1,5 +1,18 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+// Get the origin of the request
+$request_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Unserialize the ALLOWED_ORIGINS constant
+$allowed_origins = unserialize(ALLOWED_ORIGINS);
+
+// Check if the request origin is in the allowed origins list
+if (in_array($request_origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: " . $request_origin);
+} else {
+    // Optionally, you can set a default origin or restrict access further
+    // For now, if the origin is not allowed, the header will not be set,
+    // which will cause a CORS error in the browser.
+}
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Max-Age: 3600");
@@ -15,8 +28,12 @@ use \Firebase\JWT\Key;
 $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 file_put_contents('../logs/debug.log', "Token Check - Authorization Header: {$authHeader}\n", FILE_APPEND);
 
-$arr = explode(" ", $authHeader);
-$jwt = $arr[1] ?? '';
+if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    http_response_code(401);
+    echo json_encode(array("message" => "Invalid Authorization header format. Must be 'Bearer [token]'"));
+    exit();
+}
+$jwt = $matches[1];
 
 if (!$jwt) {
     http_response_code(401);

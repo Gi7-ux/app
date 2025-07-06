@@ -5,7 +5,6 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once '../core/database.php';
 require_once '../core/utils.php';
 
-
 $database = new Database();
 $db = $database->connect();
 if ($db === null) {
@@ -20,8 +19,8 @@ $query = "SELECT
             p.id, 
             p.title, 
             p.description, 
-            c.name as clientName, 
-            f.name as freelancerName, 
+            IFNULL(c.name, c.email) as clientName, 
+            CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE IFNULL(f.name, f.email) END as freelancerName, 
             p.status, 
             p.budget,
             p.deadline
