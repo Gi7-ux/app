@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ICONS } from '../../assets/icons.jsx';
 import { ProjectForm } from './components/ProjectForm.jsx';
-import { ProjectDetailsView } from './components/ProjectDetailsView.jsx';
+import ProjectDetailsModal from '../../components/ProjectDetailsModal.jsx';
+import ProjectDetailsTabView from '../../components/ProjectDetailsTabView.jsx';
 
 const downloadJSON = (data, filename) => {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -23,6 +24,10 @@ export const ProjectManagement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [error, setError] = useState('');
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
+    const [isTabViewOpen, setIsTabViewOpen] = useState(false);
+    const [selectedProjectForTabView, setSelectedProjectForTabView] = useState(null);
 
     const [view, setView] = useState('list');
     const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -85,8 +90,8 @@ export const ProjectManagement = () => {
     };
 
     const handleOpenEditModal = (project) => {
-        setEditingProject(project);
-        setIsModalOpen(true);
+        setSelectedProjectForTabView(project);
+        setIsTabViewOpen(true);
     };
 
     const handleDeleteProject = async (id) => {
@@ -152,9 +157,14 @@ export const ProjectManagement = () => {
     };
 
     const handleViewDetails = (project) => {
-        setSelectedProjectId(project.id);
-        setView('details');
+        setSelectedProjectForModal(project);
+        setIsDetailsModalOpen(true);
     };
+
+    const handleCloseDetailsModal = () => {
+        setIsDetailsModalOpen(false);
+        setSelectedProjectForModal(null);
+    }
 
     const handleUpdateProjectDetails = (updatedProject) => {
         const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
@@ -272,6 +282,13 @@ export const ProjectManagement = () => {
                 </div>
             </div>
 
+            {isDetailsModalOpen && (
+                <ProjectDetailsModal
+                    project={selectedProjectForModal}
+                    onClose={handleCloseDetailsModal}
+                />
+            )}
+
             {isModalOpen && (
                 <ProjectForm
                     project={editingProject}
@@ -279,6 +296,17 @@ export const ProjectManagement = () => {
                     onCancel={() => setIsModalOpen(false)}
                     clients={clients}
                     freelancers={freelancers}
+                />
+            )}
+
+            {isTabViewOpen && (
+                <ProjectDetailsTabView
+                    project={selectedProjectForTabView}
+                    onClose={() => setIsTabViewOpen(false)}
+                    onSave={(updatedProject) => {
+                        handleUpdateProjectDetails(updatedProject);
+                        // Keep the modal open to allow further edits
+                    }}
                 />
             )}
         </>

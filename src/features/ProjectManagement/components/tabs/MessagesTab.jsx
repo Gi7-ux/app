@@ -2,43 +2,48 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../../../../assets/icons.jsx';
 
-export const MessagesTab = ({ project, onUpdateProject }) => {
+export const MessagesTab = ({ project }) => {
+    const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
-    const adminUser = "Admin Architex";
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
 
     useEffect(() => {
-        scrollToBottom()
-    }, [project.messages]);
+        const fetchMessages = async () => {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`/api/messages/get_project_messages.php?project_id=${project.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) setMessages(await response.json());
+        };
+        fetchMessages();
+    }, [project.id]);
 
-    const handleSendMessage = (e) => {
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (newMessage.trim() === '') return;
-
-        const message = {
-            id: `msg-${Date.now()}`,
-            sender: adminUser,
-            text: newMessage.trim(),
-            timestamp: new Date().toISOString(),
-        };
-
-        onUpdateProject({
-            ...project,
-            messages: [...project.messages, message]
+        const token = localStorage.getItem('access_token');
+        await fetch('/api/messages/send_project_message.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ project_id: project.id, text: newMessage.trim() })
         });
-
         setNewMessage('');
+        // Re-fetch messages
+        const response = await fetch(`/api/messages/get_project_messages.php?project_id=${project.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) setMessages(await response.json());
     };
 
     return (
         <div className="chat-container">
             <div className="chat-window">
-                {project.messages.map(msg => (
-                    <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender === adminUser ? 'sent' : 'received'}`}>
+                {messages.map(msg => (
+                    <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender === 'Admin Architex' ? 'sent' : 'received'}`}>
                         <div className="chat-bubble">
                             <div className="chat-sender">{msg.sender}</div>
                             <p className="chat-text">{msg.text}</p>
@@ -66,5 +71,4 @@ export const MessagesTab = ({ project, onUpdateProject }) => {
 
 MessagesTab.propTypes = {
     project: PropTypes.object.isRequired,
-    onUpdateProject: PropTypes.func.isRequired,
 };

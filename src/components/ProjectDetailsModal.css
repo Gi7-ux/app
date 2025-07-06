@@ -1,0 +1,267 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #e6f7f7;
+    border-bottom: 1px solid #d1e9e9;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #0d5e5e;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #0d5e5e;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: 70vh;
+}
+
+.modal-body p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+
+.details-grid>div {
+    font-size: 0.9rem;
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+.details-grid>div strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #555;
+}
+
+.columns-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.column {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.skills-section,
+.tasks-section,
+.applications-section {
+    margin-top: 1.5rem;
+}
+
+h3 {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    background-color: #d4eefc;
+    color: #1a73e8;
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.tasks-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tasks-section li {
+    margin-bottom: 0.5rem;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+.application-card {
+    background-color: #f8f9fa;
+    border-left: 3px solid #28a745;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.application-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.application-header strong {
+    font-size: 1.05rem;
+    margin-right: 0.5rem;
+}
+
+.application-header .bid {
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.application-card p {
+    margin: 0 0 1rem 0;
+    font-style: italic;
+    color: #555;
+}
+
+.accept-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    width: fit-content;
+}
+
+.accept-btn:hover {
+    background-color: #218838;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #eee;
+    background-color: #f8f9fa;
+}
+
+.btn-secondary,
+.btn-primary {
+    padding: 0.6rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    margin-right: 0.75rem;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0069d9;
+}
+
+.status-pill {
+    padding: 0.2em 0.6em;
+    border-radius: 0.25rem;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.status-Open {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-In\.Progress {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.status-Pending\.Approval {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+
+.status-Completed {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-Archived {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
