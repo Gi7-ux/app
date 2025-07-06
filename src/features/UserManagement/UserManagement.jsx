@@ -147,8 +147,10 @@ export const UserManagement = () => {
                             {filteredUsers.map(user => (
                                 <tr key={user.email} style={{ opacity: user.status === 'inactive' ? 0.5 : 1 }}>
                                     <td>
-                                        <div style={{ position: 'relative', width: '32px' }}>
-                                            <img src={user.avatar} alt={user.name} className="user-avatar" />
+                                        <div style={{ position: 'relative', width: '36px' }}>
+                                            <div className="user-avatar">
+                                                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                                            </div>
                                             {user.role === 'freelancer' && isOnline(user.last_seen) && <div className="online-indicator"></div>}
                                         </div>
                                     </td>

@@ -7,6 +7,9 @@ require_once '../core/config.php';
 require_once '../vendor/autoload.php';
 require_once '../migrations/run_migrations.php';
 
+// Run critical migrations to ensure database schema is up to date
+run_critical_migrations();
+
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
 

@@ -3,11 +3,12 @@ import './ProjectDetailsModal.css';
 import { ICONS } from '../assets/icons';
 
 const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTasks }) => {
-    if (!project) return null;
-
     const [pendingApplications, setPendingApplications] = useState([]);
     const [loadingApplications, setLoadingApplications] = useState(true);
     const [errorApplications, setErrorApplications] = useState(null);
+    const isMounted = useRef(true);
+
+    if (!project) return null;
 
     useEffect(() => {
         if (!project || !project.id) {
@@ -17,7 +18,6 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
 
         const abortController = new AbortController();
         const signal = abortController.signal;
-        const isMounted = useRef(true);
 
         const fetchApplications = async () => {
             try {
@@ -48,7 +48,17 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
             isMounted.current = false;
             abortController.abort();
         };
-    }, [project, project.id]);
+    }, [project]);
+
+    useEffect(() => {
+        // Reset the ref when component mounts
+        isMounted.current = true;
+
+        // Cleanup on unmount
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     const handleAccept = (application) => {
         console.log('Accepted application:', application);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../assets/icons.jsx';
+import { BirdIcon } from '../assets/BirdIcon.jsx';
 import { NAV_ITEMS as ADMIN_NAV } from '../config/adminNavigation.jsx';
 import { CLIENT_NAV_ITEMS } from '../config/clientNavigation.jsx';
 import { FREELANCER_NAV_ITEMS } from '../config/freelancerNavigation.jsx';
@@ -18,11 +19,13 @@ const getNavItems = (role) => {
 const Sidebar = ({ user, navItems, currentPage, setCurrentPage }) => (
     <nav className="sidebar">
         <div className="sidebar-header">
-            {ICONS.logo}
+            <BirdIcon style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }} />
             <span>Architex Axis</span>
         </div>
         <div className="sidebar-profile">
-            <img src={user.avatar} alt={user.name} className="avatar" />
+            <div className="avatar">
+                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
             <div className="profile-info">
                 <h3>{user.name}</h3>
                 <p>{user.role}</p>
