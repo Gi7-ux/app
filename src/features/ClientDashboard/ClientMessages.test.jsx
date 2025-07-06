@@ -3,16 +3,27 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ClientMessages } from './ClientMessages';
 
+import PropTypes from 'prop-types'; // Import PropTypes
+
 // Mock the MessagingContainer to prevent its complex logic from running
-vi.mock('../Messages/components/MessagingContainer.jsx', () => ({
-  MessagingContainer: ({ currentUser }) => (
+vi.mock('../Messages/components/MessagingContainer.jsx', () => {
+  const MockedMessagingContainer = ({ currentUser }) => (
     <div data-testid="messaging-container">
       <h1>Messaging</h1>
       <p>User: {currentUser.name}</p>
       <p>Role: {currentUser.role}</p>
     </div>
-  ),
-}));
+  );
+
+  MockedMessagingContainer.propTypes = {
+    currentUser: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      role: PropTypes.string.isRequired,
+    }).isRequired,
+  };
+
+  return { MessagingContainer: MockedMessagingContainer };
+});
 
 // Mock the data file that the component uses to find the current user
 vi.mock('../../data/data.js', () => ({

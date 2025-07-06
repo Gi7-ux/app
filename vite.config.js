@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(({ mode: _mode }) => { // mode renamed to _mode
+    // const env = loadEnv(_mode, '.', ''); // If loadEnv were used, it'd use _mode
     return {
       plugins: [
         react(),

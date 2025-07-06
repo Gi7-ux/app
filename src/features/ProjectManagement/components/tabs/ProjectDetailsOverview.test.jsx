@@ -19,8 +19,8 @@ describe('ProjectDetailsOverview', () => {
 
     // Budget Card
     expect(screen.getByText('Budget')).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.startsWith('R 25'))).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.startsWith('/ R 100'))).toBeInTheDocument();
+    expect(screen.getByText((content, _element) => content.startsWith('R 25'))).toBeInTheDocument(); // Renamed element
+    expect(screen.getByText((content, _element) => content.startsWith('/ R 100'))).toBeInTheDocument(); // Renamed element
 
     // Hours Card
     expect(screen.getByText('Hours')).toBeInTheDocument();

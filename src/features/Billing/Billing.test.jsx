@@ -3,16 +3,30 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Billing } from './Billing';
 
+import PropTypes from 'prop-types'; // Import PropTypes
+
 // Mock the Invoice component to isolate the Billing component's logic
-vi.mock('./components/Invoice.jsx', () => ({
-  Invoice: ({ data, onBack }) => (
+vi.mock('./components/Invoice.jsx', () => {
+  const MockedInvoice = ({ data, onBack }) => (
     <div data-testid="invoice-component">
       <h1>Invoice Generated</h1>
       <p>Freelancer: {data.freelancer.name}</p>
       <button onClick={onBack}>Back</button>
     </div>
-  ),
-}));
+  );
+
+  MockedInvoice.propTypes = {
+    data: PropTypes.shape({
+      freelancer: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+      }).isRequired,
+      // Add other expected properties of 'data' if necessary for the mock
+    }).isRequired,
+    onBack: PropTypes.func.isRequired,
+  };
+
+  return { Invoice: MockedInvoice };
+});
 
 // Mock fetch
 global.fetch = vi.fn();

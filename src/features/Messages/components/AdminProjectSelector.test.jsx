@@ -58,7 +58,7 @@ describe('AdminProjectSelector', () => {
   });
 
   it('highlights the active thread', () => {
-    const { container } = render(
+    render( // Removed { container } as it's not used
       <AdminProjectSelector
         projects={mockProjects}
         threads={mockThreads}

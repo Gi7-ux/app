@@ -54,7 +54,7 @@ export const ClientOverview = ({ setCurrentPage }) => {
         <>
             <div className="content-header">
                 <h1>Dashboard Overview</h1>
-                <p>Welcome back! Here's a summary of your projects.</p>
+                <p>Welcome back! Here&apos;s a summary of your projects.</p>
             </div>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <div className="stat-grid">

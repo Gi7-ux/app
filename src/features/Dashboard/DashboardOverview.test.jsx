@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { DashboardOverview } from './DashboardOverview';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
-import { AuthService } from '../../services/AuthService';
+import { MemoryRouter } from 'react-router-dom'; // BrowserRouter removed
+// import { AuthService } from '../../services/AuthService'; // AuthService import removed as it's mocked
 
 vi.mock('../../services/AuthService', () => ({
   AuthService: {

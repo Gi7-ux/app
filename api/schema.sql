@@ -56,3 +56,59 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- FILES TABLE (Assuming it exists, if not, define it here)
+-- This is a placeholder, ensure the actual files table schema is present
+CREATE TABLE IF NOT EXISTS `files` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT DEFAULT NULL,
+    `uploader_id` INT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `path` VARCHAR(255) NOT NULL,
+    `size` INT NOT NULL COMMENT 'File size in bytes',
+    `type` VARCHAR(100) NOT NULL COMMENT 'MIME type or file extension',
+    `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`uploader_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- MESSAGE THREADS TABLE
+-- Stores information about a conversation thread.
+CREATE TABLE IF NOT EXISTS `message_threads` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT DEFAULT NULL,
+    `type` VARCHAR(50) NOT NULL COMMENT 'e.g., project_communication, client_admin, admin_broadcast, direct_message',
+    `subject` VARCHAR(255) DEFAULT NULL COMMENT 'Optional subject for the thread, useful for broadcasts or specific discussions',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL -- If project is deleted, thread might remain but unlinked or handled by app logic
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- MESSAGE THREAD PARTICIPANTS TABLE
+-- Links users to message threads.
+CREATE TABLE IF NOT EXISTS `message_thread_participants` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `thread_id` INT NOT NULL,
+    `user_id` INT NOT NULL,
+    `last_read_timestamp` TIMESTAMP NULL DEFAULT NULL COMMENT 'To track when a user last read messages in this thread',
+    `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE, -- If thread is deleted, participant entries are removed
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE, -- If user is deleted, participant entries are removed
+    UNIQUE KEY `unique_participant` (`thread_id`, `user_id`) -- A user can only be a participant in a thread once
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- MESSAGES TABLE
+-- Stores individual messages within a thread.
+CREATE TABLE IF NOT EXISTS `messages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `thread_id` INT NOT NULL,
+    `sender_id` INT NOT NULL,
+    `text` TEXT DEFAULT NULL,
+    `file_id` INT DEFAULT NULL COMMENT 'Reference to an uploaded file, if the message is a file share',
+    `status` VARCHAR(50) DEFAULT 'approved' COMMENT 'e.g., approved, pending, deleted',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE, -- If thread is deleted, messages are removed
+    FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL -- If file is deleted, reference is removed
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -119,6 +119,7 @@ export const FilesTab = ({ project }) => {
                                 <th>Uploader</th>
                                 <th>Size</th>
                                 <th>Date Uploaded</th>
+                                <th>Download</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -127,16 +128,30 @@ export const FilesTab = ({ project }) => {
                                 <tr key={file.id}>
                                     <td>
                                         <div className="file-name-cell">
-                                            {ICONS[file.type.startsWith('image') ? 'image' : 'pdf']}
+                                            {/* Basic icon logic, can be expanded */}
+                                            {ICONS[file.type === 'pdf' ? 'pdf' : (file.type === 'jpg' || file.type === 'png' || file.type === 'jpeg' || file.type === 'gif' ? 'image' : 'file')]}
                                             <span>{file.name}</span>
                                         </div>
                                     </td>
-                                    <td>{file.uploader}</td>
+                                    <td>{file.uploader_name}</td>
                                     <td>{formatBytes(file.size)}</td>
-                                    <td>{new Date(file.uploadedAt).toLocaleDateString()}</td>
+                                    <td>{new Date(file.uploaded_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <a
+                                            href={`/api/files/download_file.php?id=${file.id}&token=${localStorage.getItem('access_token')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="download-link-icon"
+                                            title={`Download ${file.name}`}
+                                        >
+                                            {ICONS.download || 'Download'}
+                                        </a>
+                                    </td>
                                     <td>
                                         <div className="action-icons">
-                                            <span className="delete-icon" onClick={() => handleDeleteFile(file.id)}>{ICONS.delete}</span>
+                                            {/* Assuming currentUser info would be needed here to show delete for uploader or admin */}
+                                            {/* For now, delete is kept as is. Permissions should be backend enforced. */}
+                                            <span className="delete-icon" onClick={() => handleDeleteFile(file.id)} title="Delete file">{ICONS.delete}</span>
                                         </div>
                                     </td>
                                 </tr>
