@@ -1,28 +1,66 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import PropTypes from 'prop-types'; // Import PropTypes
 import { MessagingContainer } from './MessagingContainer';
 
 // Mock child components
-vi.mock('./ConversationList.jsx', () => ({
-  ConversationList: ({ onSelectThread }) => (
+vi.mock('./ConversationList.jsx', () => {
+  const MockConversationList = ({ onSelectThread, _activeThreadId, _currentUser, _threads }) => ( // Prefixed unused props
     <div data-testid="conversation-list">
-      <button onClick={() => onSelectThread({ id: 'thread1' })}>Select Thread</button>
+      <button onClick={() => onSelectThread({ id: 'thread1', name: 'Test Thread' })}>Select Thread</button>
+      {/* Simplified mock, actual component is more complex */}
     </div>
-  ),
-}));
-vi.mock('./ChatWindow.jsx', () => ({
-  ChatWindow: ({ thread, messages, onSendMessage }) => (
+  );
+  MockConversationList.propTypes = {
+    onSelectThread: PropTypes.func.isRequired,
+    _activeThreadId: PropTypes.string, // Updated to match prefixed unused prop
+    _currentUser: PropTypes.object,    // Updated to match prefixed unused prop
+    _threads: PropTypes.array,         // Updated to match prefixed unused prop
+  };
+  return { ConversationList: MockConversationList };
+});
+
+vi.mock('./ChatWindow.jsx', () => {
+  const MockChatWindow = ({ thread, messages, onSendMessage, _currentUser, _onModerateMessage, _isLoading, _projectId }) => ( // Prefixed unused props
     <div data-testid="chat-window">
       {thread && <p>Active Thread: {thread.id}</p>}
       {messages.map(msg => <p key={msg.id}>{msg.text}</p>)}
       <button onClick={() => onSendMessage('Test Message')}>Send</button>
+      {/* Simplified mock */}
     </div>
-  ),
-}));
-vi.mock('./AdminProjectSelector.jsx', () => ({
-  AdminProjectSelector: () => <div data-testid="admin-selector"></div>,
-}));
+  );
+  MockChatWindow.propTypes = {
+    thread: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      // Add other thread properties if used by the actual ChatWindow or needed for testing
+    }), // thread can be null initially
+    messages: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      text: PropTypes.string.isRequired,
+    })).isRequired,
+    onSendMessage: PropTypes.func.isRequired,
+    _currentUser: PropTypes.object, // Updated to match prefixed unused prop
+    _onModerateMessage: PropTypes.func, // Updated to match prefixed unused prop
+    _isLoading: PropTypes.bool,         // Updated to match prefixed unused prop
+    _projectId: PropTypes.number,       // Updated to match prefixed unused prop
+  };
+  return { ChatWindow: MockChatWindow };
+});
+
+vi.mock('./AdminProjectSelector.jsx', () => {
+    const MockAdminProjectSelector = ({ _threads, _onSelectThread, _activeThreadId, _currentUser }) => ( // Prefixed unused props
+        <div data-testid="admin-selector"></div>
+    );
+    MockAdminProjectSelector.propTypes = {
+        _threads: PropTypes.array,         // Updated to match prefixed unused prop
+        _onSelectThread: PropTypes.func,   // Updated to match prefixed unused prop
+        _activeThreadId: PropTypes.string, // Updated to match prefixed unused prop
+        _currentUser: PropTypes.object,    // Updated to match prefixed unused prop
+    };
+    return { AdminProjectSelector: MockAdminProjectSelector };
+});
+
 
 // Mock fetch
 global.fetch = vi.fn();

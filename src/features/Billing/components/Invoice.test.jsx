@@ -33,9 +33,12 @@ describe('Invoice', () => {
 
     // Totals
     const totalHours = 12.5;
-    const totalAmount = totalHours * 75;
+    const calculatedTotalAmount = totalHours * mockInvoiceData.freelancer.rate; // Use rate from mock
+    const expectedTotalDueString = `R ${calculatedTotalAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace('.', ',')}`; // Format like "R 937,50"
+
     expect(screen.getByText('Total Due')).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.startsWith('R 937,50') && element.tagName.toLowerCase() === 'p')).toBeInTheDocument();
+    // Use the calculated and formatted string in the assertion
+    expect(screen.getByText((content, element) => content.startsWith(expectedTotalDueString) && element.tagName.toLowerCase() === 'p')).toBeInTheDocument();
 
     // Line Items
     expect(screen.getAllByText('Project Alpha')[0]).toBeInTheDocument();
