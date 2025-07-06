@@ -73,4 +73,20 @@ The backend API has been updated to support the new features. Key new or modifie
 - `GET /api/notifications/get.php`: Get user notifications.
 - `POST /api/notifications/mark_read.php`: Mark notifications as read.
 
+**Payments:**
+- `POST /api/payments/create_payment.php`: Records a new payment.
+  - Body: `{ invoice_id (nullable), project_id (nullable), paid_by_user_id, paid_to_user_id (nullable), amount, payment_date, payment_method (nullable), transaction_id (nullable), status (default 'completed'), notes (nullable) }`
+  - Updates `projects.total_paid_amount`, `users.total_spent_as_client`, `users.total_earned`.
+  - Admin access by default; clients can record their own payments.
+- `GET /api/payments/get_payments.php`: Retrieves a list of payments with filters and pagination.
+  - Query Params: `project_id, client_id, freelancer_id, invoice_id, status, start_date, end_date, limit, page`.
+  - Admin sees all; clients see payments they made; freelancers see payments they received.
+- `PUT /api/payments/update_payment.php`: Updates an existing payment.
+  - Body: `{ id, ... (fields to update) }`
+  - Currently Admin access only for updates. Does not automatically adjust financial summaries if amount changes (manual adjustment or future enhancement).
+- `DELETE /api/payments/delete_payment.php`: Deletes a payment record.
+  - Query Params or Body: `{ id }`
+  - Adjusts `projects.total_paid_amount`, `users.total_spent_as_client`, `users.total_earned`.
+  - Admin access only.
+
 (Refer to individual API files for detailed request/response structures.)

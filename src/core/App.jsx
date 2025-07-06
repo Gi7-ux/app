@@ -1,115 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginScreen } from './LoginScreen.jsx';
+import { ResetPasswordScreen } from './ResetPasswordScreen.jsx';
+import { RegisterScreen } from './RegisterScreen.jsx'; // Import RegisterScreen
 import Dashboard from './Dashboard.jsx';
 import { AuthService } from '../services/AuthService.js';
 
-// Create custom theme to match the design
-const theme = createTheme({
-    palette: {
-        mode: 'light',
-        primary: {
-            main: '#5B9A8B', // Teal color from screenshot
-            contrastText: '#ffffff',
-        },
-        secondary: {
-            main: '#2B3445', // Dark blue for sidebar
-            contrastText: '#ffffff',
-        },
-        background: {
-            default: '#F8FAFC', // Light gray background
-            paper: '#ffffff',
-        },
-        text: {
-            primary: '#1F2937',
-            secondary: '#6B7281',
-        },
-    },
-    typography: {
-        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-        h4: {
-            fontWeight: 600,
-            color: '#1F2937',
-        },
-        h5: {
-            fontWeight: 600,
-            color: '#5B9A8B',
-        },
-        body1: {
-            color: '#374151',
-        },
-        body2: {
-            color: '#6B7281',
-        },
-    },
-    components: {
-        MuiButton: {
-            styleOverrides: {
-                root: {
-                    textTransform: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 500,
-                    padding: '12px 24px',
-                },
-                contained: {
-                    boxShadow: 'none',
-                    '&:hover': {
-                        boxShadow: '0 4px 12px rgba(91, 154, 139, 0.3)',
-                    },
-                },
-            },
-        },
-        MuiTextField: {
-            styleOverrides: {
-                root: {
-                    '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                        '&.Mui-focused fieldset': {
-                            borderColor: '#5B9A8B',
-                        },
-                    },
-                },
-            },
-        },
-        MuiCard: {
-            styleOverrides: {
-                root: {
-                    borderRadius: '16px',
-                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                },
-            },
-        },
-    },
-});
+// A wrapper for protected routes
+const ProtectedRoute = ({ children }) => {
+    if (!AuthService.isAuthenticated()) {
+        return <Navigate to="/login" replace />;
+    }
+    return children;
+};
 
 export const App = () => {
-    const [userRole, setUserRole] = useState(null);
+    // This state is to trigger re-render on login/logout
+    const [isAuthenticated, setIsAuthenticated] = useState(AuthService.isAuthenticated());
 
-    useEffect(() => {
-        if (AuthService.isAuthenticated()) {
-            setUserRole(AuthService.getRole());
-        }
-    }, []);
-
-    const handleLogin = (role, token) => {
-        AuthService.login(token, role);
-        setUserRole(role);
+    const handleLogin = (role, accessToken, refreshToken) => {
+        AuthService.login(accessToken, refreshToken, role);
+        setIsAuthenticated(true);
+        // Navigation to dashboard will be handled by ProtectedRoute or direct navigation
     };
 
     const handleLogout = () => {
         AuthService.logout();
-        setUserRole(null);
+        setIsAuthenticated(false);
+        // Navigation to login will be handled by ProtectedRoute
     };
 
+    // Effect to listen to storage changes for logout from other tabs (optional but good UX)
+    useEffect(() => {
+        const handleStorageChange = (event) => {
+            if (event.key === 'access_token' && !event.newValue) {
+                setIsAuthenticated(false);
+            }
+             if (event.key === 'user_role' && !event.newValue) {
+                setIsAuthenticated(false);
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
+
     return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {!userRole ? (
-                <LoginScreen onLogin={handleLogin} />
-            ) : (
-                <Dashboard userRole={userRole} onLogout={handleLogout} />
-            )}
-        </ThemeProvider>
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/login"
+                    element={
+                        AuthService.isAuthenticated() ? <Navigate to="/" replace /> : <LoginScreen onLogin={handleLogin} />
+                    }
+                />
+                <Route path="/register" element={<RegisterScreen />} /> {/* Add RegisterScreen route */}
+                <Route path="/reset-password" element={<ResetPasswordScreen />} />
+                <Route
+                    path="/*" // All other routes are protected
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard
+                                userRole={AuthService.getRole()} // Get role directly inside dashboard if needed per page
+                                onLogout={handleLogout}
+                            />
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
+        </BrowserRouter>
     );
 };

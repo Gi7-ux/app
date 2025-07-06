@@ -31,10 +31,8 @@ if ($jwt) {
             $pass_stmt->execute();
             $current_password_db = $pass_stmt->fetchColumn();
 
-            // In a real app, you would use password_verify() here
-            if ($data->current_password === $current_password_db) {
-                // In a real app, you would use password_hash() here
-                $new_password_hashed = $data->new_password;
+            if (password_verify($data->current_password, $current_password_db)) {
+                $new_password_hashed = password_hash($data->new_password, PASSWORD_DEFAULT);
 
                 $query = "UPDATE users SET password = :password WHERE id = :id";
                 $stmt = $db->prepare($query);

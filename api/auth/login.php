@@ -71,7 +71,9 @@ if ($num > 0) {
         $audience_claim = "THE_AUDIENCE";
         $issuedat_claim = time(); // issued at
         $notbefore_claim = $issuedat_claim; //not before in seconds
-        $expire_claim = $issuedat_claim + 86400; // expire time in seconds (24 hours)
+        // Shorten access token expiry, e.g., to 15 minutes, to rely on refresh mechanism
+        $access_token_expire_seconds = 15 * 60; // 15 minutes
+        $expire_claim = $issuedat_claim + $access_token_expire_seconds;
 
         $token = array(
             "iss" => $issuer_claim,
@@ -91,13 +93,43 @@ if ($num > 0) {
 
         http_response_code(200);
 
-        $jwt = JWT::encode($token, JWT_SECRET, 'HS256');
+        $access_token = JWT::encode($token, JWT_SECRET, 'HS256');
+
+        // Generate Refresh Token
+        $refresh_token_expiry_days = 7; // e.g., 7 days
+        $refresh_token_expiry_seconds = $refresh_token_expiry_days * 24 * 60 * 60;
+        $refresh_token_value = bin2hex(random_bytes(32));
+        $refresh_token_hash = hash('sha256', $refresh_token_value);
+        $refresh_token_expires_at = date('Y-m-d H:i:s', $issuedat_claim + $refresh_token_expiry_seconds);
+
+        // Store refresh token hash in database
+        try {
+            // Invalidate old refresh tokens for this user (optional, good practice)
+            $invalidate_old_stmt = $db->prepare("UPDATE user_refresh_tokens SET revoked_at = NOW() WHERE user_id = :user_id AND revoked_at IS NULL");
+            $invalidate_old_stmt->bindParam(':user_id', $id);
+            $invalidate_old_stmt->execute();
+
+            $store_refresh_stmt = $db->prepare("INSERT INTO user_refresh_tokens (user_id, token_hash, expires_at) VALUES (:user_id, :token_hash, :expires_at)");
+            $store_refresh_stmt->bindParam(':user_id', $id);
+            $store_refresh_stmt->bindParam(':token_hash', $refresh_token_hash);
+            $store_refresh_stmt->bindParam(':expires_at', $refresh_token_expires_at);
+            $store_refresh_stmt->execute();
+        } catch (PDOException $e) {
+            // Log error, but proceed with login if access token was generated.
+            // User might not be able to refresh session later.
+            error_log("Failed to store refresh token for user ID {$id}: " . $e->getMessage());
+            // Optionally, you could fail the login here if refresh token storage is critical.
+            // For now, we'll allow login to succeed.
+        }
+
         echo json_encode(
             array(
                 "message" => "Successful login.",
-                "token" => $jwt,
+                "access_token" => $access_token,
+                "refresh_token" => $refresh_token_value, // Send plain refresh token to client
                 "email" => $email,
-                "role" => $role
+                "role" => $role,
+                "expires_at" => $expire_claim // Expiry of the access token
             )
         );
     } else {

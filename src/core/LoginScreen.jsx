@@ -93,11 +93,13 @@ export const LoginScreen = ({ onLogin }) => {
             const data = await response.json();
 
             if (response.ok) {
-                onLogin(data.role, data.token);
+                // The login API now returns access_token and refresh_token
+                onLogin(data.role, data.access_token, data.refresh_token);
             } else {
                 setError(data.message || 'Login failed.');
             }
-        } catch {
+        } catch (err) {
+            // Optionally log the error: console.error(err);
             setError('An error occurred. Please try again.');
         }
     };
@@ -257,3 +259,5 @@ export const LoginScreen = ({ onLogin }) => {
 LoginScreen.propTypes = {
     onLogin: PropTypes.func.isRequired,
 };
+
+export default LoginScreen;
