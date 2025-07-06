@@ -11,6 +11,18 @@ define('JWT_SECRET', 'a2u4j6k8m0n2b4v6c8x0z2q4w6e8r0t2y4u6i8o0p2l4k6j8h0g2f4d6s8
 define('ALLOWED_ORIGINS', serialize([
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://localhost:5174',
     // Add other allowed origins as needed
+]));
+
+// Whitelist of allowed table names for column_exists function
+define('ALLOWED_TABLES', serialize([
+    'users',
+    'projects',
+    'messages',
+    'assignments',
+    'notifications',
+    'project_members',
+    // Add other valid table names here
 ]));
 ?>

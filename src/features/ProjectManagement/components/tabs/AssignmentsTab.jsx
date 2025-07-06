@@ -103,7 +103,24 @@ export const AssignmentsTab = ({ project }) => {
             }
         };
         fetchAssignments();
-        // TODO: Fetch freelancers from API if needed
+
+        const fetchFreelancers = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/users/list_clients_freelancers.php', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setFreelancers(data);
+                } else {
+                    console.error('Failed to fetch freelancers:', response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching freelancers:', error);
+            }
+        };
+        fetchFreelancers();
     }, [project.id]);
 
     const saveAssignment = async (assignment) => {

@@ -23,25 +23,20 @@ function table_exists(PDO $db, string $table_name): bool {
  * @return bool
  */
 function column_exists(PDO $db, string $table_name, string $column_name): bool {
-    // Whitelist of allowed table names
-    $allowed_tables = [
-        'users',
-        'projects',
-        'messages',
-        'assignments',
-        'notifications',
-        'project_members',
-        // Add other valid table names here
-    ];
+    // Load allowed tables from configuration and create a lookup map
+    static $allowed_tables_map = null;
+    if ($allowed_tables_map === null) {
+        $allowed_tables_map = array_flip(unserialize(ALLOWED_TABLES));
+    }
 
-    // Validate table name against the whitelist
-    if (!in_array($table_name, $allowed_tables)) {
+    // Validate table name against the whitelist using O(1) lookup
+    if (!isset($allowed_tables_map[$table_name])) {
         // Log this attempt for security monitoring
         error_log("Attempted to access invalid table: " . $table_name);
         return false;
     }
 
-    $query = "SHOW COLUMNS FROM " . $table_name . " LIKE :column_name";
+    $query = "SHOW COLUMNS FROM `" . $table_name . "` LIKE :column_name";
     $stmt = $db->prepare($query);
     $stmt->execute([':column_name' => $column_name]);
     return $stmt->rowCount() > 0;

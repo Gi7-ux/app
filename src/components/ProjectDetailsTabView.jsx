@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import './ProjectDetailsModal.css';
-import './ProjectDetailsTabView.css';
-import { ICONS } from '../assets/icons';
+import ProjectDetailsTab from './ProjectDetailsTab';
+import ProjectTasksTab from './ProjectTasksTab';
+import ProjectMessagesTab from './ProjectMessagesTab';
+import ProjectFilesTab from './ProjectFilesTab';
+import ProjectTimeLogsTab from './ProjectTimeLogsTab';
 
 const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => {
     const [project, setProject] = useState(initialProject);
@@ -291,371 +293,49 @@ const ProjectDetailsTabView = ({ project: initialProject, onClose, onSave }) => 
         { id: 'timelogs', label: 'Time Logs' },
     ];
 
-    const renderDetailsTab = () => (
-        <div className="tab-content-container">
-            <form onSubmit={handleSubmit} className="project-details-form">
-                <div className="form-content">
-                    <div className="form-column">
-                        <div className="form-group">
-                            <label htmlFor="title">Project Title</label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-
-                        <div className="skills-section tab-section">
-                            <div className="tab-section-header">Skills Required:</div>
-                            <div className="skills-container tab-section-content">
-                                {Array.isArray(project.skills) && project.skills.length > 0 ? (
-                                    project.skills.map(skill => <span key={skill} className="skill-tag">{skill}</span>)
-                                ) : (
-                                    <p>No skills specified.</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="form-column">
-                        <div className="details-grid">
-                            <div className="form-group">
-                                <label htmlFor="budget">Budget (R)</label>
-                                <input
-                                    type="number"
-                                    id="budget"
-                                    name="budget"
-                                    value={formData.budget}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="deadline">Deadline</label>
-                                <input
-                                    type="date"
-                                    id="deadline"
-                                    name="deadline"
-                                    value={formData.deadline}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="status">Status</label>
-                                <select
-                                    id="status"
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="Open">Open</option>
-                                    <option value="In Progress">In Progress</option>
-                                    <option value="Pending Approval">Pending Approval</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Archived">Archived</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="client-freelancer-section tab-section">
-                            <div className="tab-section-header">Project Team</div>
-                            <div className="tab-section-content">
-                                <div><strong>Client:</strong> {project.clientName || 'Not assigned'}</div>
-                                <div><strong>Freelancer:</strong> {project.freelancerName || 'Not assigned'}</div>
-                                <div><strong>Created:</strong> {project.created_at ? new Date(project.created_at).toLocaleDateString() : 'Unknown'}</div>
-                            </div>
-                        </div>
-
-                        <div className="budget-section tab-section">
-                            <div className="tab-section-header">Budget Information</div>
-                            <div className="tab-section-content">
-                                <div><strong>Budget:</strong> R {(project.budget || 0).toLocaleString()}</div>
-                                <div><strong>Spent:</strong> R {(project.spend || 0).toLocaleString()}</div>
-                                <div><strong>Remaining:</strong> R {((project.budget || 0) - (project.spend || 0)).toLocaleString()}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="modal-footer">
-                    <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Saving...' : 'Save Changes'}
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
-
-    const renderTasksTab = () => (
-        <div className="tab-content-container">
-            <div className="form-content">
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">
-                            <span>Assigned Tasks</span>
-                            <button className="btn-primary task-add-btn">
-                                {ICONS.add} Add Task
-                            </button>
-                        </div>
-                        <div className="tasks-list tab-section-content">
-                            {project.assignments && project.assignments.length > 0 ? (
-                                project.assignments.map(task => (
-                                    <div key={task.id} className="task-item">
-                                        <div className="task-header">
-                                            <strong>{task.title}</strong>
-                                            <span className="task-status">{task.status || 'Todo'}</span>
-                                        </div>
-                                        <p>{task.description}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <div>No tasks assigned yet.</div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">Task Summary</div>
-                        <div className="tab-section-content">
-                            <div><strong>Total Tasks:</strong> {project.assignments?.length || 0}</div>
-                            <div><strong>Completed:</strong> {project.assignments?.filter(a => a.status === 'Completed').length || 0}</div>
-                            <div><strong>In Progress:</strong> {project.assignments?.filter(a => a.status === 'In Progress').length || 0}</div>
-                            <div><strong>Todo:</strong> {project.assignments?.filter(a => a.status !== 'Completed' && a.status !== 'In Progress').length || 0}</div>
-                        </div>
-                    </div>
-
-                    <div className="tab-section">
-                        <div className="tab-section-header">Create Quick Task</div>
-                        <div className="tab-section-content">
-                            <div className="form-group">
-                                <label htmlFor="task-title">Task Title</label>
-                                <input
-                                    type="text"
-                                    id="task-title"
-                                    placeholder="Enter task title"
-                                    value={quickTaskData.title}
-                                    onChange={(e) => setQuickTaskData({ ...quickTaskData, title: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="task-description">Description</label>
-                                <textarea
-                                    id="task-description"
-                                    placeholder="Enter task description"
-                                    value={quickTaskData.description}
-                                    onChange={(e) => setQuickTaskData({ ...quickTaskData, description: e.target.value })}
-                                ></textarea>
-                            </div>
-                            <button
-                                className="btn-primary"
-                                onClick={handleCreateTask}
-                                disabled={loading || !quickTaskData.title.trim()}
-                            >
-                                {loading ? 'Creating...' : 'Create Task'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
-                <button type="button" className="btn-primary">Save Tasks</button>
-            </div>
-        </div>
-    );
-
-    const renderMessagesTab = () => (
-        <div className="tab-content-container">
-            <div className="form-content">
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">Project Messages</div>
-                        <div className="messages-list tab-section-content">
-                            <div>No messages yet for this project.</div>
-                        </div>
-                    </div>
-                    <div className="message-composer">
-                        <textarea placeholder="Write a message..."></textarea>
-                        <button className="btn-primary">{ICONS.send} Send</button>
-                    </div>
-                </div>
-
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">Message Settings</div>
-                        <div className="tab-section-content">
-                            <div className="form-group">
-                                <label>Notifications</label>
-                                <select>
-                                    <option value="all">All Messages</option>
-                                    <option value="mentions">Mentions Only</option>
-                                    <option value="none">None</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Message Recipients</label>
-                                <select>
-                                    <option value="all">All Team Members</option>
-                                    <option value="client">Client Only</option>
-                                    <option value="freelancer">Freelancer Only</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="tab-section">
-                        <div className="tab-section-header">Quick Templates</div>
-                        <div className="tab-section-content">
-                            <button className="btn-secondary">Request Update</button>
-                            <button className="btn-secondary">Schedule Meeting</button>
-                            <button className="btn-secondary">Payment Reminder</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
-            </div>
-        </div>
-    );
-
-    const renderFilesTab = () => (
-        <div className="tab-content-container">
-            <div className="form-content">
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">
-                            <span>Project Files</span>
-                            <button className="btn-primary file-upload-btn">
-                                {ICONS.upload} Upload
-                            </button>
-                        </div>
-                        <div className="files-list tab-section-content">
-                            <div>No files uploaded yet.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">Upload New File</div>
-                        <div className="tab-section-content">
-                            <div className="form-group">
-                                <label>File Type</label>
-                                <select>
-                                    <option value="document">Document</option>
-                                    <option value="image">Image</option>
-                                    <option value="drawing">Drawing</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Description</label>
-                                <input type="text" placeholder="Brief description of the file" />
-                            </div>
-                            <div className="form-group">
-                                <label>File</label>
-                                <input type="file" />
-                            </div>
-                            <button className="btn-primary">{ICONS.upload} Upload File</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
-            </div>
-        </div>
-    );
-
-    const renderTimeLogsTab = () => (
-        <div className="tab-content-container">
-            <div className="form-content">
-                <div className="form-column">
-                    <div className="total-time">
-                        <strong>Total Time Logged:</strong> {project.totalTime || '00:00'}
-                    </div>
-                    <div className="tab-section">
-                        <div className="tab-section-header">
-                            <span>Time Entries</span>
-                            <button className="btn-primary timelog-add-btn">
-                                {ICONS.clock} Log Time
-                            </button>
-                        </div>
-                        <div className="timelogs-list tab-section-content">
-                            <div>No time logs recorded yet.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="form-column">
-                    <div className="tab-section">
-                        <div className="tab-section-header">Record New Time</div>
-                        <div className="tab-section-content">
-                            <div className="form-group">
-                                <label>Date</label>
-                                <input type="date" />
-                            </div>
-                            <div className="form-group">
-                                <label>Hours</label>
-                                <input type="number" min="0.25" step="0.25" />
-                            </div>
-                            <div className="form-group">
-                                <label>Task</label>
-                                <select>
-                                    <option value="">Select a task</option>
-                                    {project.assignments?.map(task => (
-                                        <option key={task.id} value={task.id}>{task.title}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Description</label>
-                                <textarea placeholder="Briefly describe the work done"></textarea>
-                            </div>
-                            <button className="btn-primary">{ICONS.clock} Save Time Entry</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={onClose}>Close</button>
-            </div>
-        </div>
-    );
-
     const renderActiveTab = () => {
         switch (activeTab) {
             case 'details':
-                return renderDetailsTab();
+                return (
+                    <ProjectDetailsTab
+                        project={project}
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                        handleSubmit={handleSubmit}
+                        loading={loading}
+                        onClose={onClose}
+                        onSave={onSave}
+                    />
+                );
             case 'tasks':
-                return renderTasksTab();
+                return (
+                    <ProjectTasksTab
+                        project={project}
+                        quickTaskData={quickTaskData}
+                        setQuickTaskData={setQuickTaskData}
+                        handleCreateTask={handleCreateTask}
+                        loading={loading}
+                        onClose={onClose}
+                    />
+                );
             case 'messages':
-                return renderMessagesTab();
+                return <ProjectMessagesTab onClose={onClose} />;
             case 'files':
-                return renderFilesTab();
+                return <ProjectFilesTab onClose={onClose} />;
             case 'timelogs':
-                return renderTimeLogsTab();
+                return <ProjectTimeLogsTab project={project} onClose={onClose} />;
             default:
-                return renderDetailsTab();
+                return (
+                    <ProjectDetailsTab
+                        project={project}
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                        handleSubmit={handleSubmit}
+                        loading={loading}
+                        onClose={onClose}
+                        onSave={onSave}
+                    />
+                );
         }
     };
 
