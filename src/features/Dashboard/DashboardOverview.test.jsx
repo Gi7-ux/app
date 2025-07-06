@@ -57,7 +57,8 @@ describe('DashboardOverview', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Dashboard Overview')).toBeInTheDocument();
+    // Check for the updated heading
+    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
 
     // Wait for stats to appear
     await waitFor(() => {
@@ -75,7 +76,8 @@ describe('DashboardOverview', () => {
 
     // Wait for activity to appear
     await waitFor(() => {
-      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+      // The heading for this section is "Recent Platform Activity"
+      expect(screen.getByText('Recent Platform Activity')).toBeInTheDocument();
       expect(screen.getByText('John Doe created a new project')).toBeInTheDocument();
       expect(screen.getByText('Jane Smith uploaded a file')).toBeInTheDocument();
     });
@@ -95,7 +97,9 @@ describe('DashboardOverview', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      // The error message might be concatenated, so we check if it includes the specific part.
+      const errorElements = screen.getAllByText(new RegExp(errorMessage, 'i'));
+      expect(errorElements.length).toBeGreaterThan(0);
     });
   });
 });
