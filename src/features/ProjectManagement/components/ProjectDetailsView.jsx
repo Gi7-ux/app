@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ICONS } from '../../../assets/icons.jsx';
+// import { ICONS } from '../../../assets/icons.jsx'; // Removed as it's not used directly here
 import { AssignmentsTab } from './tabs/AssignmentsTab.jsx';
 import { FilesTab } from './tabs/FilesTab.jsx';
 import { MessagesTab } from './tabs/MessagesTab.jsx';

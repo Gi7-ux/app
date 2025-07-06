@@ -59,6 +59,6 @@ describe('ClientProjects', () => {
     // Check for other details to ensure the table is populated
     expect(screen.getByText('Alice Architect')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
-    expect(screen.getByText((content, element) => content.startsWith('R 50'))).toBeInTheDocument();
+    expect(screen.getByText((content, _element) => content.startsWith('R 50'))).toBeInTheDocument(); // Renamed element to _element
   });
 });

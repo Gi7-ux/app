@@ -74,8 +74,7 @@ export const DashboardOverview = () => {
 
     useEffect(() => {
         fetchData();
-        // eslint-disable-next-line
-    }, []);
+    }, []); // Removed unused eslint-disable-next-line
 
     return (
         <>

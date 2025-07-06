@@ -44,15 +44,15 @@ describe('ClientSummaryReport', () => {
       // Check data from the first row
       expect(screen.getByText('Client Corp')).toBeInTheDocument();
       expect(screen.getByText('5')).toBeInTheDocument();
-      expect(screen.getByText((content, element) => content.startsWith('R 50'))).toBeInTheDocument();
-      expect(screen.getByText((content, element) => content.startsWith('R 45'))).toBeInTheDocument();
+      expect(screen.getByText((content, _element) => content.startsWith('R 50'))).toBeInTheDocument();
+      expect(screen.getByText((content, _element) => content.startsWith('R 45'))).toBeInTheDocument();
       expect(screen.getByText('31')).toBeInTheDocument(); // Check for rounded days
 
       // Check data from the second row
       expect(screen.getAllByText('Innovate LLC')[0]).toBeInTheDocument();
       expect(screen.getByText('2')).toBeInTheDocument();
-      expect(screen.getByText((content, element) => content.startsWith('R 120'))).toBeInTheDocument();
-      expect(screen.getByText((content, element) => content.startsWith('R 110'))).toBeInTheDocument();
+      expect(screen.getByText((content, _element) => content.startsWith('R 120'))).toBeInTheDocument();
+      expect(screen.getByText((content, _element) => content.startsWith('R 110'))).toBeInTheDocument();
       expect(screen.getByText('90')).toBeInTheDocument();
     });
   });

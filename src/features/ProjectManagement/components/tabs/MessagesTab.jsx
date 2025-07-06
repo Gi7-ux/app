@@ -1,74 +1,81 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ICONS } from '../../../../assets/icons.jsx';
+import { MessagingContainer } from '../../../Messages/components/MessagingContainer.jsx';
+import './MessagesTab.css'; // Assuming you might want specific styles for the tab container
 
 export const MessagesTab = ({ project }) => {
-    const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState('');
-    const messagesEndRef = useRef(null);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [loadingUser, setLoadingUser] = useState(true);
+    const [errorUser, setErrorUser] = useState('');
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`/api/messages/get_project_messages.php?project_id=${project.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) setMessages(await response.json());
+        const fetchUserData = async () => {
+            setLoadingUser(true);
+            setErrorUser('');
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    setErrorUser('No access token found. Please login.');
+                    // Potentially redirect to login: window.location.href = '/login';
+                    return;
+                }
+                // Attempt to read current user data from /api/users/read_one.php?id=current or similar
+                // For now, using a placeholder if a dedicated "current user" endpoint isn't confirmed.
+                // Let's assume /api/auth/me endpoint exists or /api/users/read_one.php can take 'me' or no ID for current user.
+                // Using the one from Messages.jsx for consistency for now:
+                const response = await fetch('/api/users/read_one.php', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) { window.location.href = '/login'; return; }
+                const data = await response.json();
+                if (response.ok) {
+                    setCurrentUser(data);
+                } else {
+                    setErrorUser(data.message || 'Failed to fetch current user data.');
+                    console.error(data.message || 'Failed to fetch current user data.');
+                }
+            } catch (error) {
+                setErrorUser('An error occurred while fetching user data.');
+                console.error('An error occurred while fetching user data:', error);
+            } finally {
+                setLoadingUser(false);
+            }
         };
-        fetchMessages();
-    }, [project.id]);
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        fetchUserData();
+    }, []);
 
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (newMessage.trim() === '') return;
-        const token = localStorage.getItem('access_token');
-        await fetch('/api/messages/send_project_message.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ project_id: project.id, text: newMessage.trim() })
-        });
-        setNewMessage('');
-        // Re-fetch messages
-        const response = await fetch(`/api/messages/get_project_messages.php?project_id=${project.id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) setMessages(await response.json());
-    };
+    if (loadingUser) {
+        return <div style={{ padding: '1.5rem', textAlign: 'center' }}>Loading user data...</div>;
+    }
+
+    if (errorUser) {
+        return <div style={{ color: 'red', padding: '1.5rem' }}>Error loading user: {errorUser}</div>;
+    }
+
+    if (!currentUser) {
+        return <div style={{ padding: '1.5rem', textAlign: 'center' }}>User data not available. Cannot load messages.</div>;
+    }
+
+    if (!project || !project.id) {
+        return <div style={{ padding: '1.5rem', textAlign: 'center' }}>Project data not available.</div>;
+    }
 
     return (
-        <div className="chat-container">
-            <div className="chat-window">
-                {messages.map(msg => (
-                    <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender === 'Admin Architex' ? 'sent' : 'received'}`}>
-                        <div className="chat-bubble">
-                            <div className="chat-sender">{msg.sender}</div>
-                            <p className="chat-text">{msg.text}</p>
-                            <div className="chat-timestamp">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                        </div>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-            <form className="chat-input-form" onSubmit={handleSendMessage}>
-                <input
-                    type="text"
-                    className="chat-input"
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <button type="submit" className="chat-send-btn" data-testid="send-button">
-                    {ICONS.send}
-                </button>
-            </form>
+        <div className="messages-tab-container">
+            {/*
+                The MessagingContainer is now responsible for fetching threads and messages
+                based on the projectId. It will also handle sending new messages.
+            */}
+            <MessagingContainer
+                currentUser={currentUser}
+                projectId={project.id}
+            />
         </div>
     );
 };
 
 MessagesTab.propTypes = {
     project: PropTypes.object.isRequired,
+    // onUpdateProject is no longer needed here as MessagingContainer handles its own data.
 };
