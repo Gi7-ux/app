@@ -62,7 +62,8 @@ describe('Integration Tests', () => {
             );
 
             // Verify project details are displayed
-            expect(screen.getByText('Full Stack Development Project')).toBeInTheDocument();
+            // The title is rendered as "Details: <project.title>"
+            expect(screen.getByText((content, element) => element.tagName.toLowerCase() === 'h2' && content.startsWith('Details:') && content.includes('Full Stack Development Project'))).toBeInTheDocument();
             expect(screen.getByText('R 10,000')).toBeInTheDocument();
 
             // Wait for applications to load
@@ -105,6 +106,14 @@ describe('Integration Tests', () => {
     });
 
     describe('Notification System Integration', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('handles notification lifecycle from fetch to mark as read', async () => {
             const mockNotifications = [
                 {
@@ -191,11 +200,18 @@ describe('Integration Tests', () => {
 
     describe('Cross-component Data Flow', () => {
         it('handles authentication state across components', async () => {
-            // Test scenario where token expires during component interaction
-            mockApi.notifications.get.mockResolvedValueOnce({
-                ok: false,
-                status: 401,
-                json: () => Promise.resolve({ message: 'Unauthorized' })
+            // Temporarily override global fetch for this specific test case
+            // to ensure NotificationBell's direct fetch call is intercepted.
+            const originalFetch = global.fetch;
+            global.fetch = vi.fn().mockImplementation((url) => {
+                if (url.includes('/api/notifications/get.php')) {
+                    return Promise.resolve({
+                        ok: false,
+                        status: 401,
+                        json: () => Promise.resolve({ message: 'Unauthorized' })
+                    });
+                }
+                return originalFetch(url); // Fallback to original fetch for other calls if any
             });
 
             const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
@@ -209,6 +225,7 @@ describe('Integration Tests', () => {
             });
 
             consoleSpy.mockRestore();
+            global.fetch = originalFetch; // Restore original fetch
         });
 
         it('handles missing token scenario', async () => {

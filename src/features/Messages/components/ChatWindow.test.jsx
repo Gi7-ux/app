@@ -1,9 +1,16 @@
 import React from 'react';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChatWindow } from './ChatWindow';
 
-const currentUser = { email: 'user@test.com', role: 'client' };
+// Mock scrollIntoView
+beforeEach(() => {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+});
+
+const currentUser = { id: 'user1', email: 'user@test.com', role: 'client', name: 'Current User' };
+const adminUser = { id: 'admin1', email: 'admin@test.com', role: 'admin', name: 'Admin User' };
 const adminUser = { email: 'admin@test.com', role: 'admin' };
 
 const mockThread = { id: 'thread1', type: 'project_client_admin_freelancer' };
@@ -29,7 +36,7 @@ vi.mock('../../../data/data.js', () => ({
 describe('ChatWindow', () => {
   it('renders a message to select a conversation if no thread is provided', () => {
     render(<ChatWindow thread={null} messages={[]} currentUser={currentUser} onSendMessage={() => {}} onModerateMessage={() => {}} />);
-    expect(screen.getByText('Select a conversation to start messaging.')).toBeInTheDocument();
+    expect(screen.getByText('Select a conversation or project to start messaging.')).toBeInTheDocument();
   });
 
   it('renders messages for the active thread', () => {
