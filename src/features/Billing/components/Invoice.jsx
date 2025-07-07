@@ -39,7 +39,7 @@ export const Invoice = ({ data, onBack }) => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <h3 style={{ color: 'var(--gray-500)' }}>Total Due</h3>
-                        <p style={{ fontSize: '2rem', fontWeight: '700' }}>R {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p style={{ fontSize: '2rem', fontWeight: '700' }}>R {totalAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     </div>
                 </section>
                 <section style={{ marginTop: '2rem' }}>
@@ -73,7 +73,7 @@ export const Invoice = ({ data, onBack }) => {
                             </tr>
                             <tr style={{ background: 'var(--gray-100)', fontSize: '1.25rem' }}>
                                 <td colSpan="3" style={{ textAlign: 'right' }}>Total Amount</td>
-                                <td style={{ textAlign: 'right' }}>R {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td style={{ textAlign: 'right' }}>R {totalAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
                         </tfoot>
                     </table>

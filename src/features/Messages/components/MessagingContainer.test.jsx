@@ -87,7 +87,17 @@ describe('MessagingContainer', () => {
   });
 
   it('renders AdminProjectSelector for admin users', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+    // Mock for fetchProjects in MessagingContainer
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ records: [] }) // Ensure it returns an object with 'records'
+    });
+    // Mock for fetchUserThreads in MessagingContainer (as admin also calls this if no projectId)
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([]) // Assuming admin might not have direct threads or it's empty
+    });
+
     render(<MessagingContainer currentUser={adminUser} />);
     await waitFor(() => {
       expect(screen.getByTestId('admin-selector')).toBeInTheDocument();
@@ -140,7 +150,7 @@ describe('MessagingContainer', () => {
       // Check that send_message.php was called
       expect(fetch).toHaveBeenCalledWith('/api/messages/send_message.php', expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ thread_id: 'thread1', text: 'Test Message' }),
+        body: JSON.stringify({ thread_id: 'thread1', text: 'Test Message', file_id: null }),
       }));
       // Check that get_messages.php was called again to refresh
       expect(fetch).toHaveBeenCalledWith('/api/messages/get_messages.php?thread_id=thread1', expect.any(Object));
