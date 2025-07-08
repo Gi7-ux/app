@@ -8,6 +8,7 @@ import { Profile } from '../features/Profile/Profile.jsx';
 import { Messages } from '../features/Messages/Messages.jsx';
 import { Reporting } from '../features/Reporting/Reporting.jsx';
 import BroadcastMessageForm from '../features/Admin/BroadcastMessageForm.jsx'; // Import the new component
+import TicketsPage from '../features/Tickets/TicketsPage.jsx';
 
 export const NAV_ITEMS = [
     { id: 'overview', label: 'Overview', icon: 'overview', component: <DashboardOverview /> },
@@ -18,5 +19,6 @@ export const NAV_ITEMS = [
     { id: 'billing', label: 'Billing', icon: 'billing', component: <Billing /> },
     { id: 'timeReports', label: 'Time Reports', icon: 'timeReports', component: <TimeReports /> },
     { id: 'reporting', label: 'Reporting', icon: 'reports', component: <Reporting /> },
+    { id: 'tickets', label: 'Support Tickets', icon: 'help_outline', component: <TicketsPage /> },
     { id: 'profile', label: 'My Profile', icon: 'profile', component: <Profile /> },
 ];

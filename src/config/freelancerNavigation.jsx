@@ -5,6 +5,7 @@ import { MyApplications } from '../features/FreelancerDashboard/MyApplications.j
 import { MyJobCards } from '../features/FreelancerDashboard/MyJobCards.jsx';
 import { FreelancerProfile } from '../features/FreelancerDashboard/FreelancerProfile.jsx';
 import { FreelancerMessages } from '../features/FreelancerDashboard/FreelancerMessages.jsx';
+import TicketsPage from '../features/Tickets/TicketsPage.jsx';
 
 export const FREELANCER_NAV_ITEMS = [
     { id: 'overview', label: 'Overview', icon: 'overview', component: <FreelancerOverview /> },
@@ -13,4 +14,5 @@ export const FREELANCER_NAV_ITEMS = [
     { id: 'jobcards', label: 'My Job Cards', icon: 'billing', component: <MyJobCards /> },
     { id: 'profile', label: 'My Profile', icon: 'profile', component: <FreelancerProfile /> },
     { id: 'messages', label: 'Messages', icon: 'messages', component: <FreelancerMessages /> },
+    { id: 'tickets', label: 'My Tickets', icon: 'help_outline', component: <TicketsPage /> },
 ];
