@@ -86,6 +86,29 @@ function run_critical_migrations() {
             file_put_contents(__DIR__ . '/../logs/debug.log', "Added last_seen column to users table\n", FILE_APPEND);
         }
         
+        // Check if tickets table exists
+        $tickets_check = "SHOW TABLES LIKE 'tickets'";
+        $tickets_stmt = $db->prepare($tickets_check);
+        $tickets_stmt->execute();
+
+        if ($tickets_stmt->rowCount() == 0) {
+            // Create tickets table
+            $create_tickets = "CREATE TABLE IF NOT EXISTS `tickets` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `title` VARCHAR(255) NOT NULL,
+                `description` TEXT NOT NULL,
+                `category` VARCHAR(100) NOT NULL,
+                `priority` ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+                `status` ENUM('Open', 'In Progress', 'Resolved', 'Closed') DEFAULT 'Open',
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            $db->exec($create_tickets);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Created tickets table\n", FILE_APPEND);
+        }
+
         $db->commit();
         return true;
     } catch (PDOException $e) {

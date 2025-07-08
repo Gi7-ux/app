@@ -1,0 +1,107 @@
+.create-ticket-form-container {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.create-ticket-form-container h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #333;
+    text-align: center;
+}
+
+.create-ticket-form .form-group {
+    margin-bottom: 15px;
+}
+
+.create-ticket-form .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+.create-ticket-form .form-group input[type="text"],
+.create-ticket-form .form-group textarea,
+.create-ticket-form .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Important for width 100% */
+    font-size: 1rem;
+}
+
+.create-ticket-form .form-group input[type="text"]:focus,
+.create-ticket-form .form-group textarea:focus,
+.create-ticket-form .form-group select:focus {
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.create-ticket-form .form-group textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 100px;
+}
+
+.create-ticket-form .form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px; /* Space between buttons */
+}
+
+/* Inherit .btn and .btn-primary from a global scope or TicketsPage.css if needed */
+/* For example, if not globally available: */
+/*
+.create-ticket-form .btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.create-ticket-form .btn-primary {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.create-ticket-form .btn-primary:hover {
+    background-color: var(--primary-color-dark, #0056b3);
+}
+*/
+
+.create-ticket-form .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.create-ticket-form .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.create-ticket-form .error-message {
+    color: #D8000C;
+    background-color: #FFD2D2;
+    border: 1px solid #D8000C;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.create-ticket-form input:disabled,
+.create-ticket-form textarea:disabled,
+.create-ticket-form select:disabled,
+.create-ticket-form button:disabled {
+    background-color: #e9ecef;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
