@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `invoice_line_items` (
     `description` VARCHAR(255) NOT NULL,
     `quantity` DECIMAL(10, 2) NOT NULL,
     `unit_price` DECIMAL(10, 2) NOT NULL,
-    `total_price` DECIMAL(10, 2) NOT NULL, -- Should be quantity * unit_price, can be enforced by app logic or trigger
+    `total_price` DECIMAL(10, 2) NOT NULL,
     `related_time_log_id` INT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE,
@@ -71,3 +71,161 @@ ADD COLUMN IF NOT EXISTS `total_paid_amount` DECIMAL(10, 2) DEFAULT 0.00 COMMENT
 ALTER TABLE `users`
 ADD COLUMN IF NOT EXISTS `total_earned` DECIMAL(10, 2) DEFAULT 0.00 COMMENT 'For freelancers: total payments received',
 ADD COLUMN IF NOT EXISTS `total_spent_as_client` DECIMAL(10, 2) DEFAULT 0.00 COMMENT 'For clients: total payments made';
+
+DELIMITER //
+
+-- Triggers for `invoices` table
+CREATE TRIGGER `after_invoice_insert`
+AFTER INSERT ON `invoices`
+FOR EACH ROW
+BEGIN
+    UPDATE `projects`
+    SET `total_invoiced_amount` = `total_invoiced_amount` + NEW.total_amount
+    WHERE `id` = NEW.project_id;
+END;
+//
+
+CREATE TRIGGER `after_invoice_update`
+AFTER UPDATE ON `invoices`
+FOR EACH ROW
+BEGIN
+    -- Adjust total_invoiced_amount if total_amount changes
+    IF OLD.total_amount != NEW.total_amount THEN
+        UPDATE `projects`
+        SET `total_invoiced_amount` = `total_invoiced_amount` - OLD.total_amount + NEW.total_amount
+        WHERE `id` = NEW.project_id;
+    END IF;
+
+    -- Adjust total_invoiced_amount if status changes
+    IF OLD.status IN ('sent', 'paid') AND NEW.status NOT IN ('sent', 'paid') THEN
+        UPDATE `projects`
+        SET `total_invoiced_amount` = `total_invoiced_amount` - NEW.total_amount
+        WHERE `id` = NEW.project_id;
+    ELSEIF OLD.status NOT IN ('sent', 'paid') AND NEW.status IN ('sent', 'paid') THEN
+        UPDATE `projects`
+        SET `total_invoiced_amount` = `total_invoiced_amount` + NEW.total_amount
+        WHERE `id` = NEW.project_id;
+    END IF;
+END;
+//
+
+CREATE TRIGGER `after_invoice_delete`
+AFTER DELETE ON `invoices`
+FOR EACH ROW
+BEGIN
+    UPDATE `projects`
+    SET `total_invoiced_amount` = `total_invoiced_amount` - OLD.total_amount
+    WHERE `id` = OLD.project_id;
+END;
+//
+
+-- Triggers for `payments` table
+CREATE TRIGGER `after_payment_insert`
+AFTER INSERT ON `payments`
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'completed' THEN
+        -- Update project's total_paid_amount
+        IF NEW.project_id IS NOT NULL THEN
+            UPDATE `projects`
+            SET `total_paid_amount` = `total_paid_amount` + NEW.amount
+            WHERE `id` = NEW.project_id;
+        END IF;
+
+        -- Update client's total_spent_as_client
+        UPDATE `users`
+        SET `total_spent_as_client` = `total_spent_as_client` + NEW.amount
+        WHERE `id` = NEW.paid_by_user_id;
+
+        -- Update freelancer's total_earned
+        IF NEW.paid_to_user_id IS NOT NULL THEN
+            UPDATE `users`
+            SET `total_earned` = `total_earned` + NEW.amount
+            WHERE `id` = NEW.paid_to_user_id;
+        END IF;
+    END IF;
+END;
+//
+
+CREATE TRIGGER `after_payment_update`
+AFTER UPDATE ON `payments`
+FOR EACH ROW
+BEGIN
+    -- Adjust amounts if status changes to/from 'completed' or amount changes
+    IF OLD.status = 'completed' AND NEW.status != 'completed' THEN
+        -- Payment status changed from completed to non-completed, subtract old amount
+        IF OLD.project_id IS NOT NULL THEN
+            UPDATE `projects`
+            SET `total_paid_amount` = `total_paid_amount` - OLD.amount
+            WHERE `id` = OLD.project_id;
+        END IF;
+        UPDATE `users`
+        SET `total_spent_as_client` = `total_spent_as_client` - OLD.amount
+        WHERE `id` = OLD.paid_by_user_id;
+        IF OLD.paid_to_user_id IS NOT NULL THEN
+            UPDATE `users`
+            SET `total_earned` = `total_earned` - OLD.amount
+            WHERE `id` = OLD.paid_to_user_id;
+        END IF;
+    ELSEIF OLD.status != 'completed' AND NEW.status = 'completed' THEN
+        -- Payment status changed from non-completed to completed, add new amount
+        IF NEW.project_id IS NOT NULL THEN
+            UPDATE `projects`
+            SET `total_paid_amount` = `total_paid_amount` + NEW.amount
+            WHERE `id` = NEW.project_id;
+        END IF;
+        UPDATE `users`
+        SET `total_spent_as_client` = `total_spent_as_client` + NEW.amount
+        WHERE `id` = NEW.paid_by_user_id;
+        IF NEW.paid_to_user_id IS NOT NULL THEN
+            UPDATE `users`
+            SET `total_earned` = `total_earned` + NEW.amount
+            WHERE `id` = NEW.paid_to_user_id;
+        END IF;
+    ELSEIF OLD.status = 'completed' AND NEW.status = 'completed' AND OLD.amount != NEW.amount THEN
+        -- Payment remains completed, but amount changed, adjust by difference
+        IF OLD.project_id IS NOT NULL THEN
+            UPDATE `projects`
+            SET `total_paid_amount` = `total_paid_amount` - OLD.amount + NEW.amount
+            WHERE `id` = OLD.project_id;
+        END IF;
+        UPDATE `users`
+        SET `total_spent_as_client` = `total_spent_as_client` - OLD.amount + NEW.amount
+        WHERE `id` = OLD.paid_by_user_id;
+        IF NEW.paid_to_user_id IS NOT NULL THEN
+            UPDATE `users`
+            SET `total_earned` = `total_earned` - OLD.amount + NEW.amount
+            WHERE `id` = NEW.paid_to_user_id;
+        END IF;
+    END IF;
+END;
+//
+
+CREATE TRIGGER `after_payment_delete`
+AFTER DELETE ON `payments`
+FOR EACH ROW
+BEGIN
+    IF OLD.status = 'completed' THEN
+        -- Decrement project's total_paid_amount
+        IF OLD.project_id IS NOT NULL THEN
+            UPDATE `projects`
+            SET `total_paid_amount` = `total_paid_amount` - OLD.amount
+            WHERE `id` = OLD.project_id;
+        END IF;
+
+        -- Decrement client's total_spent_as_client
+        UPDATE `users`
+        SET `total_spent_as_client` = `total_spent_as_client` - OLD.amount
+        WHERE `id` = OLD.paid_by_user_id;
+
+        -- Decrement freelancer's total_earned
+        IF OLD.paid_to_user_id IS NOT NULL THEN
+            UPDATE `users`
+            SET `total_earned` = `total_earned` - OLD.amount
+            WHERE `id` = OLD.paid_to_user_id;
+        END IF;
+    END IF;
+END;
+//
+
+DELIMITER ;

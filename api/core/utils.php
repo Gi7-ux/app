@@ -42,7 +42,7 @@ function column_exists(PDO $db, string $table_name, string $column_name): bool {
     return $stmt->rowCount() > 0;
 }
 require_once 'config.php';
-require_once '../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;

@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AssignmentsTab } from './AssignmentsTab';
+
+// Mock fetch globally
+global.fetch = vi.fn();
 
 const mockProject = {
   id: 'proj1',
@@ -17,17 +20,44 @@ const mockProject = {
   ],
 };
 
-vi.mock('../../../data/data.js', () => ({
-  mockData: {
-    userManagement: {
-      users: [{ name: 'Alice', role: 'freelancer' }, { name: 'Bob', role: 'freelancer' }],
-    },
-  },
-}));
-
 describe('AssignmentsTab', () => {
+  beforeEach(() => {
+    fetch.mockClear();
+
+    // Mock successful API responses
+    fetch.mockImplementation((url) => {
+      if (url.includes('list_clients_freelancers.php')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { name: 'Alice', role: 'freelancer' },
+            { name: 'Bob', role: 'freelancer' }
+          ])
+        });
+      }
+
+      if (url.includes('assignments/save.php')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Assignment saved successfully' })
+        });
+      }
+
+      if (url.includes('assignments/get.php')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([])
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({})
+      });
+    });
+  });
   it('renders existing assignments and tasks', () => {
-    render(<AssignmentsTab project={mockProject} onUpdateProject={() => {}} />);
+    render(<AssignmentsTab project={mockProject} onUpdateProject={() => { }} />);
 
     expect(screen.getByText('Schematics')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Draw floor plan')).toBeInTheDocument();
@@ -56,7 +86,7 @@ describe('AssignmentsTab', () => {
   it('adds a new task when prompted', () => {
     const onUpdateProjectMock = vi.fn();
     vi.spyOn(window, 'prompt').mockReturnValue('New Task From Prompt');
-    
+
     render(<AssignmentsTab project={mockProject} onUpdateProject={onUpdateProjectMock} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -80,20 +110,20 @@ describe('AssignmentsTab', () => {
     fireEvent.click(deleteIcons[0]);
 
     expect(onUpdateProjectMock).toHaveBeenCalledWith(expect.objectContaining({
-        assignments: expect.arrayContaining([
-          expect.objectContaining({
-            tasks: expect.not.arrayContaining([
-              expect.objectContaining({ id: 'task1' })
-            ]),
-          }),
-        ]),
-      }));
+      assignments: expect.arrayContaining([
+        expect.objectContaining({
+          tasks: expect.not.arrayContaining([
+            expect.objectContaining({ id: 'task1' })
+          ]),
+        }),
+      ]),
+    }));
   });
 
   it('adds a new assignment when prompted', () => {
     const onUpdateProjectMock = vi.fn();
     vi.spyOn(window, 'prompt').mockReturnValue('New Assignment');
-    
+
     render(<AssignmentsTab project={mockProject} onUpdateProject={onUpdateProjectMock} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Assignment' }));

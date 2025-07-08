@@ -15,13 +15,29 @@ const mockFiles = [
 describe('FilesTab', () => {
   beforeEach(() => {
     fetch.mockClear();
+
+    // Mock successful API responses based on URL patterns
+    fetch.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('get_files.php')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockFiles) });
+      }
+
+      if (typeof url === 'string' && url.includes('upload.php')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ message: 'Upload successful' }) });
+      }
+
+      if (typeof url === 'string' && url.includes('delete.php')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ message: 'Delete successful' }) });
+      }
+
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
   });
 
   it('fetches and displays a list of files', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockFiles) });
     render(<FilesTab project={mockProject} />);
 
-    expect(fetch).toHaveBeenCalledWith(`/api/files/get_files.php?project_id=${mockProject.id}`, expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('get_files.php'), expect.any(Object));
 
     await waitFor(() => {
       expect(screen.getByText('floor-plan.pdf')).toBeInTheDocument();
@@ -32,7 +48,14 @@ describe('FilesTab', () => {
   });
 
   it('displays a message when there are no files', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+    // Override the mock for this specific test
+    fetch.mockImplementationOnce((url) => {
+      if (typeof url === 'string' && url.includes('get_files.php')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
     render(<FilesTab project={mockProject} />);
 
     await waitFor(() => {
@@ -41,22 +64,23 @@ describe('FilesTab', () => {
   });
 
   it('handles file upload', async () => {
-    // Initial fetch is empty
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
-    // Upload call
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: 'Upload successful' }) });
-    // Refetch after upload
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockFiles) });
+    // Mock sequence of API calls for file upload
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }) // Initial empty fetch
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: 'Upload successful' }) }) // Upload call
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockFiles) }); // Refetch after upload
+
+    fetch.mockImplementation(fetchMock);
 
     render(<FilesTab project={mockProject} />);
-    
+
     const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    const input = screen.getByTestId('file-input'); // Assuming you add data-testid="file-input" to the input
+    const input = screen.getByTestId('file-input');
 
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/files/upload.php', expect.any(Object));
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('upload.php'), expect.any(Object));
       // Check that the files are refetched and displayed
       expect(screen.getByText('floor-plan.pdf')).toBeInTheDocument();
     });
@@ -64,12 +88,14 @@ describe('FilesTab', () => {
 
   it('handles file deletion', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    // Initial fetch
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockFiles) });
-    // Delete call
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: 'Delete successful' }) });
-    // Refetch after delete
-    fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([mockFiles[1]]) }); // Only the second file remains
+
+    // Mock sequence of API calls for file deletion
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockFiles) }) // Initial fetch
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: 'Delete successful' }) }) // Delete call
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([mockFiles[1]]) }); // Refetch after delete
+
+    fetch.mockImplementation(fetchMock);
 
     render(<FilesTab project={mockProject} />);
 
@@ -81,7 +107,7 @@ describe('FilesTab', () => {
     fireEvent.click(deleteIcons[0]);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/files/delete.php', expect.any(Object));
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('delete.php'), expect.any(Object));
       expect(screen.queryByText('floor-plan.pdf')).not.toBeInTheDocument();
       expect(screen.getByText('render.jpg')).toBeInTheDocument();
     });

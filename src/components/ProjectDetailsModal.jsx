@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ProjectDetailsModal.css';
 import { ICONS } from '../assets/icons';
+import { AuthService } from '../services/AuthService.js';
 
 const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTasks }) => {
     const [pendingApplications, setPendingApplications] = useState([]);
@@ -23,8 +24,15 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
             try {
                 if (isMounted.current) setLoadingApplications(true);
                 if (isMounted.current) setErrorApplications(null);
-                // Assuming an API endpoint like /api/projects/{projectId}/applications
-                const response = await fetch(`/api/projects/${project.id}/applications`, { signal });
+
+                const token = AuthService.getAccessToken();
+                // Using query parameter format like other endpoints
+                const response = await fetch(`/api/projects/applications.php?project_id=${project.id}`, {
+                    signal,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../assets/icons';
-import { getToken } from '../services/AuthService'; // Assuming you have a way to get the auth token
+import { AuthService } from '../services/AuthService'; // Assuming you have a way to get the auth token
 import './ProjectFilesTab.css'; // Import the CSS file
 
 const API_URL = import.meta.env.VITE_API_URL || ''; // Adjust if your API URL is configured differently
@@ -23,7 +23,7 @@ const ProjectFilesTab = ({ onClose, projectId, currentUser }) => {
         if (!projectId) return;
         setIsLoading(true);
         setError(null);
-        const token = getToken();
+        const token = AuthService.getAccessToken();
 
         try {
             const response = await fetch(`${API_URL}/api/files/get_files.php?project_id=${projectId}`, {
@@ -50,7 +50,7 @@ const ProjectFilesTab = ({ onClose, projectId, currentUser }) => {
     }, [fetchFiles, projectId]);
 
     const handleFileDownload = async (fileId, fileName) => {
-        const token = getToken();
+    const token = AuthService.getAccessToken();
         try {
             const response = await fetch(`${API_URL}/api/files/download_file.php?id=${fileId}`, {
                 headers: {
@@ -78,7 +78,7 @@ const ProjectFilesTab = ({ onClose, projectId, currentUser }) => {
 
     const handleFileDelete = async (fileId) => {
         if (!window.confirm("Are you sure you want to delete this file?")) return;
-        const token = getToken();
+        const token = AuthService.getAccessToken();
         try {
             const response = await fetch(`${API_URL}/api/files/delete.php`, {
                 method: 'POST',

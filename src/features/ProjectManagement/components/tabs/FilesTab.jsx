@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../../../../assets/icons.jsx';
+import { getApiUrl, API_ENDPOINTS } from '../../../../config/api.js';
 
 const formatBytes = (bytes, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
@@ -20,7 +21,8 @@ export const FilesTab = ({ project }) => {
         setError('');
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`/api/files/get_files.php?project_id=${project.id}`, {
+            const url = getApiUrl(API_ENDPOINTS.FILES.GET, { project_id: project.id });
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -52,7 +54,8 @@ export const FilesTab = ({ project }) => {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch('/api/files/upload.php', {
+            const url = getApiUrl(API_ENDPOINTS.FILES.UPLOAD);
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -76,7 +79,8 @@ export const FilesTab = ({ project }) => {
         if (window.confirm(`Are you sure you want to delete this file?`)) {
             try {
                 const token = localStorage.getItem('access_token');
-                const response = await fetch('/api/files/delete.php', {
+                const url = getApiUrl(API_ENDPOINTS.FILES.DELETE);
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ file_id: fileId })
@@ -133,12 +137,12 @@ export const FilesTab = ({ project }) => {
                                             <span>{file.name}</span>
                                         </div>
                                     </td>
-                                    <td>{file.uploader_name}</td>
+                                    <td>{file.uploader || file.uploader_name || 'Unknown'}</td>
                                     <td>{formatBytes(file.size)}</td>
-                                    <td>{new Date(file.uploaded_at).toLocaleDateString()}</td>
+                                    <td>{file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : file.uploaded_at ? new Date(file.uploaded_at).toLocaleDateString() : 'Unknown'}</td>
                                     <td>
                                         <a
-                                            href={`/api/files/download_file.php?id=${file.id}&token=${localStorage.getItem('access_token')}`}
+                                            href={getApiUrl(API_ENDPOINTS.FILES.DOWNLOAD, { id: file.id, token: localStorage.getItem('access_token') })}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="download-link-icon"

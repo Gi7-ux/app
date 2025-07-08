@@ -72,31 +72,31 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
                 setError(data.message || 'Failed to fetch stats.');
             }
 
-            // Fetch recent communications (e.g., last 3 messages related to freelancer's projects)
-            // Placeholder: /api/activity/get.php?user_id=X&type=communication&limit=3
-            const commsResponse = await fetch(`/api/activity/get.php?user_id=${AuthService.getUserId()}&limit=3&type=communication`, {
-                 headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Fetch recent communications and upcoming project deadlines in parallel
+            const [commsResponse, deadlinesResponse] = await Promise.all([
+                fetch(`/api/activity/get.php?user_id=${AuthService.getUserId()}&limit=3&type=communication`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch(`/api/projects/read.php?freelancer_id=${AuthService.getUserId()}&status=In Progress&limit=3`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
+
+            // Process communications response
             if (commsResponse.ok) {
                 const commsData = await commsResponse.json();
                 setRecentCommunications(commsData.length > 0 ? commsData : [{ action: "No recent communications.", created_at: new Date().toISOString(), user_name:"System" }]);
             } else {
-                 setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name:"Error" }]);
+                setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name:"Error" }]);
             }
 
-
-            // Fetch upcoming project deadlines for assigned projects
-            // Placeholder: /api/projects/read.php?freelancer_id=X&status=In Progress&limit=3
-            const deadlinesResponse = await fetch(`/api/projects/read.php?freelancer_id=${AuthService.getUserId()}&status=In Progress&limit=3`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Process deadlines response
             if (deadlinesResponse.ok) {
                 const deadlinesData = await deadlinesResponse.json();
-                 const formattedDeadlines = (deadlinesData.records || deadlinesData || []).map(p => ({
+                const formattedDeadlines = (deadlinesData.records || deadlinesData || []).map(p => ({
                     id: p.id,
                     title: p.title,
                     due_date: p.due_date || "Not set",
-                    // Assuming tasks might be part of project data or fetched separately
                     next_task: (p.tasks && p.tasks.find(t => t.status !== 'Completed')?.title) || "N/A"
                 })).slice(0,3);
                 setUpcomingDeadlines(formattedDeadlines.length > 0 ? formattedDeadlines : [{id:0, title:"No upcoming deadlines for active projects.", due_date: "", next_task:""}]);
@@ -113,8 +113,7 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
 
     useEffect(() => {
         fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [navigate]);
 
 
     return (

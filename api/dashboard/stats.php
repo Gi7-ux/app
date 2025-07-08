@@ -41,11 +41,9 @@ if ($jwt) {
             $stats['projects_in_progress'] = $stmt_progress->fetchColumn();
             
             // Actual count for messages pending approval (example, assuming a 'status' column in 'messages' table)
-            // This requires the messages table to have a status like 'pending_approval'
-            // $stmt_msg_approval = $db->query("SELECT COUNT(*) as total FROM messages WHERE status = 'pending_approval'");
-            // $stats['messages_pending_approval'] = $stmt_msg_approval->fetchColumn();
-            // SIMULATING some messages pending approval for Admin
-            $stats['messages_pending_approval'] = 2; // Replacing 0 with a mock value for UI testing
+            // This requires the messages table to have a status like 'pending'
+            $stmt_msg_approval = $db->query("SELECT COUNT(*) as total FROM messages WHERE status = 'pending'");
+            $stats['messages_pending_approval'] = $stmt_msg_approval->fetchColumn();
 
             // Actual count for projects pending approval
             $stmt_proj_approval = $db->query("SELECT COUNT(*) as total FROM projects WHERE status = 'Pending Approval'");
@@ -64,10 +62,10 @@ if ($jwt) {
                 'monthly_revenue' => "USD 12,000.00" // Mocked with currency symbol
             ];
 
-            $stmt_deadlines = $db->query("SELECT COUNT(*) as total FROM projects WHERE due_date >= CURDATE() AND status NOT IN ('Completed', 'Cancelled')");
+            $stmt_deadlines = $db->query("SELECT COUNT(*) as total FROM projects WHERE deadline >= CURDATE() AND status NOT IN ('Completed', 'Cancelled')");
             $stats['upcoming_deadlines_count'] = $stmt_deadlines->fetchColumn();
 
-            $stmt_overdue = $db->query("SELECT COUNT(*) as total FROM projects WHERE due_date < CURDATE() AND status NOT IN ('Completed', 'Cancelled')");
+            $stmt_overdue = $db->query("SELECT COUNT(*) as total FROM projects WHERE deadline < CURDATE() AND status NOT IN ('Completed', 'Cancelled')");
             $stats['overdue_tasks_count'] = $stmt_overdue->fetchColumn();
 
 

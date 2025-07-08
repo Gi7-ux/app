@@ -57,7 +57,8 @@ describe('PaymentList Component', () => {
         render(<PaymentList />);
         await waitFor(() => {
             expect(screen.getByText('Project Alpha')).toBeInTheDocument();
-            expect(screen.getByText('$250.50')).toBeInTheDocument(); // Check formatting
+            expect(screen.getByText('$100.00')).toBeInTheDocument(); // Check formatting for first payment
+            expect(screen.getByText('$250.50')).toBeInTheDocument(); // Check formatting for second payment
             expect(screen.getByText('Client B')).toBeInTheDocument();
             expect(screen.getByText('Freelancer X')).toBeInTheDocument();
         });

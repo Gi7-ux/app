@@ -54,7 +54,7 @@ export const Billing = () => {
 
     const generateInvoice = async () => {
         if (invoiceFilters.freelancer === 'All' || !invoiceFilters.startDate || !invoiceFilters.endDate) {
-            alert('Please select a freelancer and a date range to generate an invoice.');
+            setError('Please select a freelancer and a date range to generate an invoice.');
             return;
         }
         setError('');
@@ -67,7 +67,7 @@ export const Billing = () => {
                 }
             });
             if (response.data.logs.length === 0) {
-                alert('No time logs found for the selected criteria.');
+                setError('No time logs found for the selected criteria.');
                 setInvoiceData(null); // Clear previous invoice if any
                 return;
             }

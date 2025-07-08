@@ -1,24 +1,12 @@
 <?php
-// Get the origin of the request
-$request_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+require_once '../core/config.php';
 
-// Unserialize the ALLOWED_ORIGINS constant
-$allowed_origins = unserialize(ALLOWED_ORIGINS);
-
-// Check if the request origin is in the allowed origins list
-if (in_array($request_origin, $allowed_origins)) {
-    header("Access-Control-Allow-Origin: " . $request_origin);
-} else {
-    // Optionally, you can set a default origin or restrict access further
-    // For now, if the origin is not allowed, the header will not be set,
-    // which will cause a CORS error in the browser.
-}
+// Set CORS headers
+header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-require_once '../core/config.php';
 require_once '../vendor/autoload.php';
 
 use \Firebase\JWT\JWT;

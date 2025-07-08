@@ -113,7 +113,7 @@ if ($jwt) {
         $project['assignments'] = $assignments;
 
         // --- Get Files ---
-        $files_query = "SELECT id, name, size, type, uploaded_at, uploader_id FROM files WHERE project_id = :project_id";
+        $files_query = "SELECT id, filename as name, filepath, uploaded_by as uploader_id, uploaded_at FROM files WHERE project_id = :project_id";
         $files_stmt = $db->prepare($files_query);
         $files_stmt->bindParam(':project_id', $project_id);
         $files_stmt->execute();

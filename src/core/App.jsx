@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginScreen } from './LoginScreen.jsx';
 import { ResetPasswordScreen } from './ResetPasswordScreen.jsx';
 import { RegisterScreen } from './RegisterScreen.jsx'; // Import RegisterScreen
@@ -33,10 +33,7 @@ export const App = () => {
     // Effect to listen to storage changes for logout from other tabs (optional but good UX)
     useEffect(() => {
         const handleStorageChange = (event) => {
-            if (event.key === 'access_token' && !event.newValue) {
-                setIsAuthenticated(false);
-            }
-             if (event.key === 'user_role' && !event.newValue) {
+            if ((event.key === 'access_token' || event.key === 'user_role') && !event.newValue) {
                 setIsAuthenticated(false);
             }
         };
@@ -48,28 +45,26 @@ export const App = () => {
 
 
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route
-                    path="/login"
-                    element={
-                        AuthService.isAuthenticated() ? <Navigate to="/" replace /> : <LoginScreen onLogin={handleLogin} />
-                    }
-                />
-                <Route path="/register" element={<RegisterScreen />} /> {/* Add RegisterScreen route */}
-                <Route path="/reset-password" element={<ResetPasswordScreen />} />
-                <Route
-                    path="/*" // All other routes are protected
-                    element={
-                        <ProtectedRoute>
-                            <Dashboard
-                                userRole={AuthService.getRole()} // Get role directly inside dashboard if needed per page
-                                onLogout={handleLogout}
-                            />
-                        </ProtectedRoute>
-                    }
-                />
-            </Routes>
-        </BrowserRouter>
+        <Routes>
+            <Route
+                path="/login"
+                element={
+                    AuthService.isAuthenticated() ? <Navigate to="/" replace /> : <LoginScreen onLogin={handleLogin} />
+                }
+            />
+            <Route path="/register" element={<RegisterScreen />} /> {/* Add RegisterScreen route */}
+            <Route path="/reset-password" element={<ResetPasswordScreen />} />
+            <Route
+                path="/*" // All other routes are protected
+                element={
+                    <ProtectedRoute>
+                        <Dashboard
+                            userRole={AuthService.getRole()} // Get role directly inside dashboard if needed per page
+                            onLogout={handleLogout}
+                        />
+                    </ProtectedRoute>
+                }
+            />
+        </Routes>
     );
 };

@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ICONS } from '../../assets/icons.jsx';
 import { ProjectForm } from './components/ProjectForm.jsx';
-import ProjectDetailsModal from '../../components/ProjectDetailsModal.jsx';
-import ProjectDetailsTabView from '../../components/ProjectDetailsTabView.jsx';
+import { ProjectDetailsView } from './components/ProjectDetailsView.jsx';
 
 const downloadJSON = (data, filename) => {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -24,10 +23,6 @@ export const ProjectManagement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [error, setError] = useState('');
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-    const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
-    const [isTabViewOpen, setIsTabViewOpen] = useState(false);
-    const [selectedProjectForTabView, setSelectedProjectForTabView] = useState(null);
 
     const [view, setView] = useState('list');
     const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -37,7 +32,6 @@ export const ProjectManagement = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [clientFilter, setClientFilter] = useState('All');
     const [freelancerFilter, setFreelancerFilter] = useState('All');
-    const [showArchived, setShowArchived] = useState(false);
 
     const fetchProjects = async () => {
         setError('');
@@ -48,10 +42,6 @@ export const ProjectManagement = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            if (response.status === 401) {
-                window.location.href = '/login';
-                return;
-            }
             const data = await response.json();
             if (response.ok) {
                 setProjects(data.records);
@@ -90,8 +80,8 @@ export const ProjectManagement = () => {
     };
 
     const handleOpenEditModal = (project) => {
-        setSelectedProjectForTabView(project);
-        setIsTabViewOpen(true);
+        setEditingProject(project);
+        setIsModalOpen(true);
     };
 
     const handleDeleteProject = async (id) => {
@@ -126,24 +116,15 @@ export const ProjectManagement = () => {
             } else {
                 url = '/api/projects/create.php';
                 method = 'POST';
-                // Only send required fields for creation
-                payload = {
-                    title: formData.title,
-                    client_id: formData.client_id || formData.clientId,
-                    budget: formData.budget,
-                    description: formData.description,
-                    deadline: formData.deadline
-                };
+                // Find client_id by name
+                const client = clients.find(c => c.name === formData.clientName);
+                payload = { ...formData, client_id: client ? client.id : null };
             }
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
-            if (response.status === 401) {
-                window.location.href = '/login';
-                return;
-            }
             const data = await response.json();
             if (response.ok) {
                 fetchProjects();
@@ -157,14 +138,9 @@ export const ProjectManagement = () => {
     };
 
     const handleViewDetails = (project) => {
-        setSelectedProjectForModal(project);
-        setIsDetailsModalOpen(true);
+        setSelectedProjectId(project.id);
+        setView('details');
     };
-
-    const handleCloseDetailsModal = () => {
-        setIsDetailsModalOpen(false);
-        setSelectedProjectForModal(null);
-    }
 
     const handleUpdateProjectDetails = (updatedProject) => {
         const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
@@ -177,14 +153,13 @@ export const ProjectManagement = () => {
 
     const filteredProjects = useMemo(() => {
         return projects.filter(p => {
-            const searchMatch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+            const searchMatch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
             const statusMatch = statusFilter === 'All' || p.status === statusFilter;
             const clientMatch = clientFilter === 'All' || p.clientName === clientFilter;
             const freelancerMatch = freelancerFilter === 'All' || p.freelancerName === freelancerFilter;
-            const archivedMatch = showArchived ? true : p.status !== 'Archived';
-            return searchMatch && statusMatch && clientMatch && freelancerMatch && archivedMatch;
+            return searchMatch && statusMatch && clientMatch && freelancerMatch;
         });
-    }, [projects, searchTerm, statusFilter, clientFilter, freelancerFilter, showArchived]);
+    }, [projects, searchTerm, statusFilter, clientFilter, freelancerFilter]);
 
     const selectedProject = projects.find(p => p.id === selectedProjectId);
 
@@ -234,10 +209,6 @@ export const ProjectManagement = () => {
                             </select>
                         </div>
                     </div>
-                    <div className="filter-group archived-filter">
-                        <input type="checkbox" id="show-archived" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />
-                        <label htmlFor="show-archived">Show Archived Projects</label>
-                    </div>
                 </div>
                 {error && <p style={{ color: 'red', padding: '1.5rem' }}>{error}</p>}
                 <div className="table-container">
@@ -282,13 +253,6 @@ export const ProjectManagement = () => {
                 </div>
             </div>
 
-            {isDetailsModalOpen && (
-                <ProjectDetailsModal
-                    project={selectedProjectForModal}
-                    onClose={handleCloseDetailsModal}
-                />
-            )}
-
             {isModalOpen && (
                 <ProjectForm
                     project={editingProject}
@@ -296,17 +260,6 @@ export const ProjectManagement = () => {
                     onCancel={() => setIsModalOpen(false)}
                     clients={clients}
                     freelancers={freelancers}
-                />
-            )}
-
-            {isTabViewOpen && (
-                <ProjectDetailsTabView
-                    project={selectedProjectForTabView}
-                    onClose={() => setIsTabViewOpen(false)}
-                    onSave={(updatedProject) => {
-                        handleUpdateProjectDetails(updatedProject);
-                        // Keep the modal open to allow further edits
-                    }}
                 />
             )}
         </>

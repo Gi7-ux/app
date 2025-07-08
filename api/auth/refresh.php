@@ -85,8 +85,8 @@ try {
     }
 
     // --- Issue a new Access Token ---
-    $issuer_claim = "YOUR_DOMAIN.com";
-    $audience_claim = "THE_AUDIENCE";
+    $issuer_claim = JWT_ISSUER;
+    $audience_claim = JWT_AUDIENCE;
     $issuedat_claim = time();
     $notbefore_claim = $issuedat_claim;
     $access_token_expire_seconds = 15 * 60; // New Access Token: 15 minutes expiry

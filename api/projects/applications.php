@@ -1,5 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Max-Age: 3600");
@@ -7,7 +7,20 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 // Include database and object files
 include_once '../core/database.php';
+include_once '../core/utils.php';
 include_once '../objects/application.php';
+require_once '../migrations/run_migrations.php';
+
+// Run critical migrations to ensure database schema is up to date
+run_critical_migrations();
+
+// Validate authentication
+$user_data = validate_token();
+if (!$user_data) {
+    http_response_code(401);
+    echo json_encode(array("message" => "Authentication required."));
+    exit();
+}
 
 // Get database connection
 $database = new Database();
@@ -16,10 +29,13 @@ $db = $database->connect();
 // Prepare application object
 $application = new Application($db);
 
-// Get project ID from URL path
-$request_uri = explode('/', $_SERVER['REQUEST_URI']);
-$project_id_index = array_search('projects', $request_uri) + 1;
-$project_id = isset($request_uri[$project_id_index]) ? intval($request_uri[$project_id_index]) : die();
+// Get project ID from query parameter
+$project_id = isset($_GET['project_id']) ? intval($_GET['project_id']) : 0;
+if (!$project_id) {
+    http_response_code(400);
+    echo json_encode(array("message" => "Project ID is required."));
+    exit();
+}
 
 // Query applications
 $stmt = $application->readByProjectId($project_id);

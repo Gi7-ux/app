@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // Assuming React Router for URL params
+import { useLocation, useNavigate, Link } from 'react-router-dom'; // Assuming React Router for URL params
 
 export const ResetPasswordScreen = () => {
     const [token, setToken] = useState('');
@@ -131,7 +131,7 @@ export const ResetPasswordScreen = () => {
                     </form>
                 )}
                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                    <a href="/login" style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}>Back to Login</a>
+                    <Link to="/login" style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}>Back to Login</Link>
                 </div>
             </div>
         </div>

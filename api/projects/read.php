@@ -23,6 +23,7 @@ $query = "SELECT
             CASE WHEN f.id IS NULL THEN 'Unassigned' ELSE IFNULL(f.name, f.email) END as freelancerName, 
             p.status, 
             p.budget,
+            COALESCE(p.total_invoiced_amount, 0) as spend,
             p.deadline
           FROM 
             projects p
@@ -47,6 +48,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         "freelancerName" => $freelancerName,
         "status" => $status,
         "budget" => $budget,
+        "spend" => $spend,
         "deadline" => $deadline
     );
     array_push($projects_arr["records"], $project_item);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../../../../assets/icons.jsx';
+import { getApiUrl, API_ENDPOINTS } from '../../../../config/api.js';
 
 const TaskItem = ({ task, onUpdate, onDelete, freelancers }) => {
     return (
@@ -13,7 +14,7 @@ const TaskItem = ({ task, onUpdate, onDelete, freelancers }) => {
             />
             <select value={task.assignedTo} onChange={e => onUpdate({ ...task, assignedTo: e.target.value })}>
                 <option value="Not Assigned">Not Assigned</option>
-                {freelancers.map(f => <option key={f.email} value={f.name}>{f.name}</option>)}
+                {freelancers.map(f => <option key={f.email || f.name} value={f.name}>{f.name}</option>)}
             </select>
             <select value={task.status} onChange={e => onUpdate({ ...task, status: e.target.value })}>
                 <option value="To Do">To Do</option>
@@ -40,6 +41,7 @@ const AssignmentCard = ({ assignment, onUpdate, freelancers }) => {
         const description = window.prompt("Enter new task description:");
         if (!description || description.trim() === '') return;
         const newTask = {
+            id: Date.now().toString(), // Temporary ID for testing
             description: description,
             assignedTo: 'Not Assigned',
             status: 'To Do'
@@ -82,32 +84,39 @@ AssignmentCard.propTypes = {
     freelancers: PropTypes.array.isRequired,
 };
 
-export const AssignmentsTab = ({ project }) => {
-    const [assignments, setAssignments] = useState([]);
+export const AssignmentsTab = ({ project, onUpdateProject }) => {
+    const [assignments, setAssignments] = useState(project.assignments || []);
     const [freelancers, setFreelancers] = useState([]);
 
     useEffect(() => {
-        const fetchAssignments = async () => {
-            try {
-                const token = localStorage.getItem('access_token');
-                const response = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    setAssignments(await response.json());
-                } else {
-                    console.error('Failed to fetch assignments:', response.status, response.statusText);
+        // Initialize with project assignments if available, otherwise fetch from API
+        if (project.assignments && project.assignments.length > 0) {
+            setAssignments(project.assignments);
+        } else {
+            const fetchAssignments = async () => {
+                try {
+                    const token = localStorage.getItem('access_token');
+                    const url = getApiUrl(API_ENDPOINTS.ASSIGNMENTS.GET, { project_id: project.id });
+                    const response = await fetch(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        setAssignments(await response.json());
+                    } else {
+                        console.error('Failed to fetch assignments:', response.status, response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error fetching assignments:', error);
                 }
-            } catch (error) {
-                console.error('Error fetching assignments:', error);
-            }
-        };
-        fetchAssignments();
+            };
+            fetchAssignments();
+        }
 
         const fetchFreelancers = async () => {
             try {
                 const token = localStorage.getItem('access_token');
-                const response = await fetch('/api/users/list_clients_freelancers.php', {
+                const url = getApiUrl(API_ENDPOINTS.USERS.LIST_FREELANCERS);
+                const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -126,7 +135,8 @@ export const AssignmentsTab = ({ project }) => {
     const saveAssignment = async (assignment) => {
         try {
             const token = localStorage.getItem('access_token');
-            const saveResponse = await fetch('/api/assignments/save.php', {
+            const saveUrl = getApiUrl(API_ENDPOINTS.ASSIGNMENTS.SAVE);
+            const saveResponse = await fetch(saveUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ ...assignment, project_id: project.id })
@@ -138,7 +148,8 @@ export const AssignmentsTab = ({ project }) => {
             }
 
             // Re-fetch assignments
-            const fetchResponse = await fetch(`/api/assignments/get.php?project_id=${project.id}`, {
+            const fetchUrl = getApiUrl(API_ENDPOINTS.ASSIGNMENTS.GET, { project_id: project.id });
+            const fetchResponse = await fetch(fetchUrl, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -152,12 +163,37 @@ export const AssignmentsTab = ({ project }) => {
         }
     };
 
-    const handleUpdateAssignment = (updatedAssignment) => saveAssignment(updatedAssignment);
+    const handleUpdateAssignment = (updatedAssignment) => {
+        const updatedAssignments = assignments.map(a => a.id === updatedAssignment.id ? updatedAssignment : a);
+        setAssignments(updatedAssignments);
+
+        // Call onUpdateProject if provided (for testing and parent components)
+        if (onUpdateProject) {
+            onUpdateProject({ ...project, assignments: updatedAssignments });
+        }
+
+        // Also save to API
+        saveAssignment(updatedAssignment);
+    };
 
     const handleAddAssignment = () => {
         const title = window.prompt('Enter new assignment title:');
         if (title && title.trim() !== '') {
-            saveAssignment({ title: title.trim(), tasks: [] });
+            const newAssignment = {
+                id: Date.now().toString(), // Temporary ID for testing
+                title: title.trim(),
+                tasks: []
+            };
+            const updatedAssignments = [...assignments, newAssignment];
+            setAssignments(updatedAssignments);
+
+            // Call onUpdateProject if provided (for testing and parent components)
+            if (onUpdateProject) {
+                onUpdateProject({ ...project, assignments: updatedAssignments });
+            }
+
+            // Also save to API
+            saveAssignment(newAssignment);
         }
     };
 
@@ -179,4 +215,5 @@ export const AssignmentsTab = ({ project }) => {
 
 AssignmentsTab.propTypes = {
     project: PropTypes.object.isRequired,
+    onUpdateProject: PropTypes.func,
 };

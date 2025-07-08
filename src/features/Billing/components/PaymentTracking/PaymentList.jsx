@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import { apiClient } from '../../../../api/apiClient'; // Assuming apiClient is setup for API calls
 import './PaymentList.css'; // We'll create this CSS file next
 
@@ -14,6 +16,9 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
     const [limit] = useState(10); // Or make this configurable
     const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
     // Filters - can be expanded with a UI later
     const [filters, setFilters] = useState({
@@ -69,11 +74,22 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
         }
         try {
             await apiClient.delete(`/payments/delete_payment.php?id=${paymentId}`);
-            alert('Payment deleted successfully.');
+            setSnackbarMessage('Payment deleted successfully.');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
             fetchPayments(); // Refresh list
         } catch (err) {
-            alert(`Failed to delete payment: ${err.response?.data?.message || err.message}`);
+            setSnackbarMessage(`Failed to delete payment: ${err.response?.data?.message || err.message}`);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
         }
+    };
+
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
     };
 
 
@@ -159,6 +175,11 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
                     </div>
                 </>
             )}
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 <?php
 // Allow localhost for development CORS
-$allowedOrigins = ['http://localhost:5174', 'https://yourfrontenddomain.com'];
+$allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://yourfrontenddomain.com'];
 if(isset($_SERVER['HTTP_ORIGIN'])){
     header("Access-Control-Allow-Credentials: true");
     header("Vary: Origin"); // Required when allowing credentials
