@@ -33,6 +33,12 @@ class MockDB {
         'notifications' => []
     ];
     public int $lastInsertId = 0;
+    public bool $forceException = false;
+    public array $queryLog = [];
+    
+    public function forceExceptionOnNextQuery(bool $force = true): void {
+        $this->forceException = $force;
+    }
 
     private function __construct() {
         // Seed with some basic data if needed
@@ -66,7 +72,14 @@ class MockStatement {
     public function __construct(string $query, MockDB $db) { $this->query = $query; $this->db = $db; }
     public function bindParam(string $param, &$variable) { $this->params[$param] = $variable; } // Simplified
     public function bindValue(string $param, $value) { $this->params[$param] = $value; }
-    public function execute() { /* Simulate execution based on query type and params */
+    public function execute() { 
+        $this->db->queryLog[] = $this->query;
+        
+        if ($this->db->forceException) {
+            $this->db->forceException = false; // Reset after throwing
+            throw new PDOException('Simulated database error');
+        }
+
         if (stripos($this->query, 'INSERT INTO message_threads') !== false) {
             $this->db->lastInsertId = rand(100,200); // Simulate auto-increment
             // Actually add to $this->db->tables['message_threads'] here...
