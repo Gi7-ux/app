@@ -1,88 +1,25 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-    Box,
-    Button,
-    Card,
-    FormControl,
-    FormLabel,
-    TextField,
-    Typography,
-    Alert,
-    Stack,
-    Link
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { BirdIcon } from '../assets/BirdIcon.jsx';
-
-const SignInCard = styled(Card)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignSelf: 'center',
-    width: '100%',
-    padding: theme.spacing(5),
-    gap: theme.spacing(2),
-    margin: 'auto',
-    backgroundColor: '#ffffff',
-    [theme.breakpoints.up('sm')]: {
-        maxWidth: '450px',
-    },
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-    border: 'none',
-}));
-
-const SignInContainer = styled(Stack)(({ theme }) => ({
-    minHeight: '100vh',
-    padding: theme.spacing(2),
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    [theme.breakpoints.up('sm')]: {
-        padding: theme.spacing(4),
-    },
-}));
+import { SquaresBackground } from '../components/SquaresBackground.jsx';
 
 export const LoginScreen = ({ onLogin }) => {
-    const [email, setEmail] = useState('you@example.com');
+    const [email, setEmail] = useState('admin@architex.co.za');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [emailError, setEmailError] = useState(false);
-    const [emailErrorMessage, setEmailErrorMessage] = useState('');
-    const [passwordError, setPasswordError] = useState(false);
-    const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
-
-    const validateInputs = () => {
-        let isValid = true;
-
-        if (!email || !/\S+@\S+\.\S+/.test(email)) {
-            setEmailError(true);
-            setEmailErrorMessage('Please enter a valid email address.');
-            isValid = false;
-        } else {
-            setEmailError(false);
-            setEmailErrorMessage('');
-        }
-
-        if (!password || password.length < 6) {
-            setPasswordError(true);
-            setPasswordErrorMessage('Password must be at least 6 characters long.');
-            isValid = false;
-        } else {
-            setPasswordError(false);
-            setPasswordErrorMessage('');
-        }
-
-        return isValid;
-    };
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        if (!validateInputs()) {
+        if (!email || !password) {
+            setError('Please enter both email and password.');
             return;
         }
 
         setError('');
+        setIsLoading(true);
+
         try {
             const response = await fetch('/api/auth/login.php', {
                 method: 'POST',
@@ -93,166 +30,97 @@ export const LoginScreen = ({ onLogin }) => {
             const data = await response.json();
 
             if (response.ok) {
-                // The login API now returns access_token and refresh_token
                 onLogin(data.role, data.access_token, data.refresh_token);
             } else {
                 setError(data.message || 'Login failed.');
             }
-        } catch (err) {
-            // Optionally log the error: console.error(err);
+        } catch (error) {
+            console.error('Login error:', error);
             setError('An error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <SignInContainer direction="column" component="main">
-            <SignInCard variant="outlined">
-                {/* Logo and Header */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <BirdIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography
-                        variant="h4"
-                        component="h1"
-                        sx={{
-                            fontWeight: 'bold',
-                            fontSize: '1.8rem',
-                            textAlign: 'center',
-                            color: 'text.primary',
-                            mb: 1
-                        }}
-                    >
-                        Architex Axis
-                    </Typography>
-                    <Typography
-                        variant="h5"
-                        component="h2"
-                        sx={{
-                            fontWeight: 'normal',
-                            fontSize: '1.3rem',
-                            textAlign: 'center',
-                            color: 'text.primary',
-                            mb: 1
-                        }}
-                    >
-                        Management Suite
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            textAlign: 'center',
-                            color: 'text.secondary',
-                            fontSize: '0.95rem'
-                        }}
-                    >
-                        Access your architectural project hub.
-                    </Typography>
-                </Box>
+        <div className="login-container">
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1
+            }}>
+                <SquaresBackground
+                    direction="diagonal"
+                    speed={0.3}
+                    borderColor="rgba(91, 154, 139, 0.15)"
+                    squareSize={50}
+                    hoverFillColor="rgba(91, 154, 139, 0.1)"
+                />
+            </div>
+            <div className="login-card">
+                <div className="login-header">
+                    <BirdIcon className="login-logo" />
+                    <h1 className="login-title">Architex Axis</h1>
+                    <h2 className="login-subtitle">Management Suite</h2>
+                    <p className="login-description">Access your architectural project hub.</p>
+                </div>
 
-                <Box
-                    component="form"
-                    onSubmit={handleLogin}
-                    noValidate
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: '100%',
-                        gap: 2.5,
-                    }}
-                >
-                    <FormControl>
-                        <FormLabel htmlFor="email" sx={{ mb: 1, color: 'text.primary', fontWeight: 500 }}>
-                            Email address
-                        </FormLabel>
-                        <TextField
-                            error={emailError}
-                            helperText={emailErrorMessage}
+                <form onSubmit={handleLogin} className="login-form">
+                    <div className="form-group">
+                        <label htmlFor="email" className="form-label">Email address</label>
+                        <input
                             id="email"
                             type="email"
                             name="email"
-                            placeholder="you@example.com"
+                            placeholder="admin@architex.co.za"
                             autoComplete="email"
                             autoFocus
                             required
-                            fullWidth
-                            variant="outlined"
+                            className="form-input"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            color={emailError ? 'error' : 'primary'}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#ffffff',
-                                }
-                            }}
                         />
-                    </FormControl>
+                    </div>
 
-                    <FormControl>
-                        <FormLabel htmlFor="password" sx={{ mb: 1, color: 'text.primary', fontWeight: 500 }}>
-                            Password
-                        </FormLabel>
-                        <TextField
-                            error={passwordError}
-                            helperText={passwordErrorMessage}
+                    <div className="form-group">
+                        <label htmlFor="password" className="form-label">Password</label>
+                        <input
+                            id="password"
+                            type="password"
                             name="password"
                             placeholder="••••••••"
-                            type="password"
-                            id="password"
                             autoComplete="current-password"
                             required
-                            fullWidth
-                            variant="outlined"
+                            className="form-input"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            color={passwordError ? 'error' : 'primary'}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#ffffff',
-                                }
-                            }}
                         />
-                    </FormControl>
+                    </div>
 
                     {error && (
-                        <Alert severity="error" sx={{ width: '100%' }}>
+                        <div className="error-message">
                             {error}
-                        </Alert>
+                        </div>
                     )}
 
-                    <Button
+                    <button
                         type="submit"
-                        fullWidth
-                        variant="contained"
-                        sx={{
-                            mt: 2,
-                            py: 1.5,
-                            backgroundColor: 'primary.main',
-                            '&:hover': {
-                                backgroundColor: 'primary.dark',
-                            }
-                        }}
+                        className={`login-button ${isLoading ? 'loading' : ''}`}
+                        disabled={isLoading}
                     >
-                        Sign In
-                    </Button>
+                        {isLoading ? 'Signing In...' : 'Sign In'}
+                    </button>
 
-                    <Typography sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}>
-                        Don&apos;t have an account?{' '}
-                        <Link
-                            href="/signup"
-                            variant="body2"
-                            sx={{
-                                color: 'primary.main',
-                                textDecoration: 'none',
-                                '&:hover': {
-                                    textDecoration: 'underline',
-                                }
-                            }}
-                        >
-                            Sign up
-                        </Link>
-                    </Typography>
-                </Box>
-            </SignInCard>
-        </SignInContainer>
+                    <p className="signup-link">
+                        Don&apos;t have an account? <a href="/signup">Sign up</a>
+                    </p>
+                </form>
+            </div>
+        </div>
     );
 };
 

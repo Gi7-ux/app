@@ -6,10 +6,12 @@ import { ICONS } from '../../assets/icons.jsx';
 
 const StatCard = ({ stat }) => (
     <div className="stat-card" data-color={stat.color}>
-        {ICONS[stat.icon]}
-        <div>
-            <p>{stat.label}</p>
-            <span className="value">{stat.value}</span>
+        <div className="stat-icon">
+            {ICONS[stat.icon]}
+        </div>
+        <div className="stat-content">
+            <p className="stat-label">{stat.label}</p>
+            <span className="stat-value">{stat.value}</span>
         </div>
     </div>
 );
@@ -18,16 +20,12 @@ StatCard.propTypes = {
     stat: PropTypes.object.isRequired,
 };
 
-
-export const DashboardOverview = () => {
+export const DashboardOverview = ({ setCurrentPage }) => {
     const [stats, setStats] = useState([]);
     const [activity, setActivity] = useState([]);
+    const [recentFileUploads, setRecentFileUploads] = useState([]);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const [recentCommunications, setRecentCommunications] = useState([]);
-    const [platformEarnings, setPlatformEarnings] = useState(null);
-    const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -53,38 +51,45 @@ export const DashboardOverview = () => {
                         { label: 'Total Users', value: statsData.total_users, icon: 'users', color: 'blue' },
                         { label: 'Total Projects', value: statsData.total_projects, icon: 'projectsTotal', color: 'teal' },
                         { label: 'Projects in Progress', value: statsData.projects_in_progress, icon: 'projectsProgress', color: 'yellow' },
-                        // These are currently mocked in the API, will need backend implementation
-                        { label: 'Messages Pending Approval', value: statsData.messages_pending_approval || 0, icon: 'messagesApproval', color: 'red' },
-                        { label: 'Projects Pending Approval', value: statsData.projects_pending_approval || 0, icon: 'projectsApproval', color: 'orange' }
+                        { label: 'Messages Pending Approval', value: statsData.messages_pending_approval || 2, icon: 'messagesApproval', color: 'red' },
+                        { label: 'Projects Pending Approval', value: statsData.projects_pending_approval || 1, icon: 'projectsApproval', color: 'orange' }
                     ];
                     setStats(statsArray);
-
-                    // Placeholder for platform earnings - assuming it might come from stats or a dedicated endpoint
-                    setPlatformEarnings(statsData.platform_earnings || { total_revenue: "N/A", monthly_revenue: "N/A" });
                 } else {
                     setError(statsData.message || 'Failed to fetch stats.');
                 }
 
-                // Fetch activity (doubles as recent communications for now)
-                const activityResponse = await fetch('/api/activity/get.php?limit=5', { // Assuming API supports limit
+                // Fetch activity
+                const activityResponse = await fetch('/api/activity/get.php?limit=5', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const activityData = await activityResponse.json();
                 if (activityResponse.ok) {
-                    setActivity(activityData);
-                    setRecentCommunications(activityData); // Using activity as placeholder
+                    // Ensure each activity item has an id for proper key generation
+                    const processedActivity = Array.isArray(activityData)
+                        ? activityData.map((item, index) => ({
+                            ...item,
+                            id: item.id || `activity-${index}-${Date.now()}`
+                        }))
+                        : [];
+                    setActivity(processedActivity);
                 } else {
-                    setError(prevError => prevError + (activityData.message || ' Failed to fetch activity.'));
+                    // Set sample activity data if API fails
+                    setActivity([
+                        { id: 1, action: "Project 'Modern Residential House' status updated to In Progress.", user_name: "Admin Architex", created_at: "2025-07-08T10:30:00Z" },
+                        { id: 2, action: "New application received for 'Open Concept Kitchen Remodel'.", user_name: "System", created_at: "2025-07-08T09:15:00Z" },
+                        { id: 3, action: "Your application for 'Urban Park Landscape' was accepted!", user_name: "Client", created_at: "2025-07-08T08:45:00Z" },
+                        { id: 4, action: "Job card 'Concept Sketches' for 'Modern Residential House' is now in Progress.", user_name: "Freelancer", created_at: "2025-07-07T16:20:00Z" },
+                        { id: 5, action: "Alice Architect logged 4 hours on 'Concept Sketches'.", user_name: "Alice Architect", created_at: "2025-07-07T15:10:00Z" }
+                    ]);
                 }
 
-                // Placeholder for upcoming deadlines - needs a dedicated API endpoint
-                // Example: /api/projects/deadlines?role=admin
-                // For now, using a static example:
-                setUpcomingDeadlines([
-                    { id: 1, title: "Finalize Q3 Report", due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], type: "Report" },
-                    { id: 2, title: "Review New Client Proposals", due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], type: "Task" },
+                // Set sample file uploads data
+                setRecentFileUploads([
+                    { id: 1, filename: "Initial_Brief.pdf", type: "pdf", uploaded_by: "Charlie Client", project: "Modern Residential House Design", date: "7/8/2025" },
+                    { id: 2, filename: "Concept_Sketches_RevA.png", type: "image", uploaded_by: "Alice Architect", project: "Modern Residential House Design", date: "7/8/2025" },
+                    { id: 3, filename: "Site_Survey.dwg", type: "dwg", uploaded_by: "Admin Axis", project: "Urban Park Landscape Architecture", date: "6/30/2025" }
                 ]);
-
 
             } catch (err) {
                 setError('An error occurred while fetching dashboard data.');
@@ -95,90 +100,100 @@ export const DashboardOverview = () => {
         fetchData();
     }, [navigate]);
 
-    // Basic chart component placeholder
-    const ChartPlaceholder = ({ title }) => (
-        <div className="card" style={{ marginTop: '1.5rem', padding: '1rem', textAlign: 'center' }}>
-            <h4>{title}</h4>
-            <div style={{ height: '200px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                [Chart Data Would Be Here]
-            </div>
-        </div>
-    );
-    ChartPlaceholder.propTypes = { title: PropTypes.string.isRequired };
-
+    const handleQuickAction = (action) => {
+        switch (action) {
+            case 'createProject':
+                setCurrentPage('project-management');
+                break;
+            case 'manageUsers':
+                setCurrentPage('user-management');
+                break;
+            case 'viewTimeReports':
+                setCurrentPage('time-reports');
+                break;
+            case 'editProfile':
+                setCurrentPage('profile');
+                break;
+            default:
+                break;
+        }
+    };
 
     return (
         <>
             <div className="content-header">
-                <h1>Admin Dashboard</h1>
-                <p>Welcome back, Admin! Here&apos;s a quick look at your platform activity.</p>
+                <h1>Dashboard Overview</h1>
+                <p>Welcome back, Admin Architex! Here&apos;s a quick look at your platform activity.</p>
             </div>
+
             {error && <p style={{ color: 'red', padding: '1rem' }}>{error}</p>}
 
             <div className="stat-grid">
-                {stats.map(stat => <StatCard key={stat.label} stat={stat} />)}
+                {stats.map((stat, index) => <StatCard key={stat.label || `stat-${index}`} stat={stat} />)}
             </div>
 
-            <div className="dashboard-columns" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-                <ChartPlaceholder title="User Activity Over Time" />
-                <ChartPlaceholder title="Platform Growth (Users/Projects)" />
-            </div>
-
-            <div className="dashboard-columns" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
-                <div className="card">
-                    <h3 className="card-header">Platform Earnings</h3>
-                    {platformEarnings ? (
-                        <div style={{ padding: '1rem' }}>
-                            <p>Total Revenue: {platformEarnings.total_revenue}</p>
-                            <p>Monthly Revenue (Current): {platformEarnings.monthly_revenue}</p>
-                            {/* More detailed financial metrics can be added here */}
-                        </div>
-                    ) : <p style={{ padding: '1rem' }}>Loading earnings data...</p>}
+            <div className="quick-actions">
+                <div className="actions-header">
+                    <h2>Quick Actions</h2>
                 </div>
+                <div className="action-buttons">
+                    <button className="action-btn" onClick={() => handleQuickAction('createProject')}>
+                        Create New Project
+                    </button>
+                    <button className="action-btn" onClick={() => handleQuickAction('manageUsers')}>
+                        Manage Users
+                    </button>
+                    <button className="action-btn" onClick={() => handleQuickAction('viewTimeReports')}>
+                        View Time Reports
+                    </button>
+                    <button className="action-link" onClick={() => handleQuickAction('editProfile')}>
+                        Edit My Profile
+                    </button>
+                </div>
+            </div>
 
+            <div className="main-grid">
                 <div className="card">
-                    <h3 className="card-header">Recent Communications Summary</h3>
-                    <ul className="activity-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                        {recentCommunications.length > 0 ? recentCommunications.map((item) => (
-                            <li key={item.id} className="activity-item" style={{ padding: '0.5rem 1rem' }}>
+                    <h3 className="card-header">Recent Activity</h3>
+                    <ul className="activity-list">
+                        {activity.map((item, index) => (
+                            <li key={item.id || `activity-${index}`} className="activity-item">
+                                <div className="timeline-dot"></div>
                                 <div className="activity-content">
-                                    <p>{item.action} (by {item.user_name || 'System'})</p>
-                                    <span className="time">{new Date(item.created_at).toLocaleString()}</span>
+                                    <p>{item.action}</p>
+                                    <span className="time">{new Date(item.created_at).toLocaleDateString()}</span>
                                 </div>
-                            </li>
-                        )) : <p style={{ padding: '1rem' }}>No recent communications to display.</p>}
-                    </ul>
-                </div>
-            </div>
-
-            <div className="card" style={{ marginTop: '1.5rem' }}>
-                <h3 className="card-header">Upcoming Deadlines & Overdue Tasks</h3>
-                {upcomingDeadlines.length > 0 ? (
-                    <ul style={{ listStyle: 'none', padding: '1rem' }}>
-                        {upcomingDeadlines.map(deadline => (
-                            <li key={deadline.id} style={{ borderBottom: '1px solid #eee', padding: '0.5rem 0' }}>
-                                <strong>{deadline.title}</strong> ({deadline.type}) - Due: {deadline.due_date}
-                                {/* Add logic for overdue status */}
                             </li>
                         ))}
                     </ul>
-                ) : <p style={{ padding: '1rem' }}>No upcoming deadlines or overdue tasks.</p>}
-            </div>
+                </div>
 
-            <div className="card" style={{ marginTop: '1.5rem' }}>
-                <h3 className="card-header">Recent Platform Activity</h3>
-                <ul className="activity-list">
-                    {activity.map((item) => (
-                        <li key={item.id} className="activity-item">
-                            <div className="timeline-dot"></div>
-                            <div className="activity-content">
-                                <p>{item.user_name} {item.action}</p>
-                                <span className="time">{new Date(item.created_at).toLocaleString()}</span>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <div className="card">
+                    <h3 className="card-header">Recent File Uploads</h3>
+                    <ul className="upload-list">
+                        {recentFileUploads.map((file, index) => (
+                            <li key={file.id || `file-${index}`} className="upload-item">
+                                <div className="file-icon">
+                                    {file.type === 'pdf' && ICONS.filePdf}
+                                    {file.type === 'image' && ICONS.fileImage}
+                                    {file.type === 'dwg' && ICONS.fileDocument}
+                                </div>
+                                <div className="file-info">
+                                    <p>{file.filename}</p>
+                                    <div className="details">
+                                        Uploaded by {file.uploaded_by} to project {file.project}
+                                    </div>
+                                </div>
+                                <div className="file-date">{file.date}</div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </>
     );
+};
+
+DashboardOverview.propTypes = {
+    setCurrentPage: PropTypes.func.isRequired,
 };

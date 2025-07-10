@@ -9,7 +9,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 $database = new Database();
 $db = $database->connect();
 $decoded_token = validate_token();
-$user_id = $decoded_token->user_id; // Assuming user_id is in the token data
+$user_id = $decoded_token->id; // Get user ID from token data
 
 $project_id = $_GET['project_id'] ?? null;
 if (!$project_id) {

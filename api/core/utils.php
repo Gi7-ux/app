@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Check if a table exists in the database.
+ * Check if a table exists in the database (SQLite version).
  *
  * @param PDO $db
  * @param string $table_name
  * @return bool
  */
 function table_exists(PDO $db, string $table_name): bool {
-    $query = "SHOW TABLES LIKE :table_name";
+    $query = "SELECT name FROM sqlite_master WHERE type='table' AND name = :table_name";
     $stmt = $db->prepare($query);
     $stmt->execute([':table_name' => $table_name]);
     return $stmt->rowCount() > 0;
 }
 
 /**
- * Check if a column exists in a specific table.
+ * Check if a column exists in a specific table (SQLite version).
  *
  * @param PDO $db
  * @param string $table_name
@@ -23,23 +23,17 @@ function table_exists(PDO $db, string $table_name): bool {
  * @return bool
  */
 function column_exists(PDO $db, string $table_name, string $column_name): bool {
-    // Load allowed tables from configuration and create a lookup map
-    static $allowed_tables_map = null;
-    if ($allowed_tables_map === null) {
-        $allowed_tables_map = array_flip(unserialize(ALLOWED_TABLES));
-    }
-
-    // Validate table name against the whitelist using O(1) lookup
-    if (!isset($allowed_tables_map[$table_name])) {
-        // Log this attempt for security monitoring
-        error_log("Attempted to access invalid table: " . $table_name);
-        return false;
-    }
-
-    $query = "SHOW COLUMNS FROM `" . $table_name . "` LIKE :column_name";
+    $query = "PRAGMA table_info(" . $table_name . ")";
     $stmt = $db->prepare($query);
-    $stmt->execute([':column_name' => $column_name]);
-    return $stmt->rowCount() > 0;
+    $stmt->execute();
+    $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($columns as $column) {
+        if ($column['name'] === $column_name) {
+            return true;
+        }
+    }
+    return false;
 }
 require_once 'config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -73,8 +67,7 @@ function validate_token() {
 
 /**
  * Check if a user has permission for a specific project.
- * This is a placeholder function. Actual implementation might involve
- * checking roles, project membership, or other authorization logic.
+ * Checks if the user is the client, freelancer, or admin for the project.
  *
  * @param PDO $db The database connection.
  * @param int $user_id The ID of the user.
@@ -82,13 +75,24 @@ function validate_token() {
  * @return bool True if the user has permission, false otherwise.
  */
 function check_project_permission(PDO $db, int $user_id, int $project_id): bool {
-    // Example: Check if the user is a member of the project
-    // This assumes a 'project_members' table with 'user_id' and 'project_id'
-    $query = "SELECT COUNT(*) FROM project_members WHERE user_id = :user_id AND project_id = :project_id";
+    // Check if the user is the client, freelancer, or is an admin
+    $query = "SELECT COUNT(*) FROM projects WHERE id = :project_id AND (client_id = :user_id OR freelancer_id = :user_id)";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':user_id', $user_id);
     $stmt->bindParam(':project_id', $project_id);
     $stmt->execute();
-    return $stmt->fetchColumn() > 0;
+    
+    if ($stmt->fetchColumn() > 0) {
+        return true;
+    }
+    
+    // Check if user is admin
+    $query = "SELECT role FROM users WHERE id = :user_id";
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+    $role = $stmt->fetchColumn();
+    
+    return $role === 'admin';
 }
 ?>

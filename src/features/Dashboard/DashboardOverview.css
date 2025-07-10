@@ -7,47 +7,98 @@
 }
 
 .stat-card {
-    padding: 1.75rem;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    margin: 0 0 0.5rem 0;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    display: block;
+    color: var(--text-primary);
+    line-height: 1;
 }
 
 .stat-card[data-color="blue"] {
     background: linear-gradient(135deg, var(--card-blue-bg) 0%, #E1F0EF 100%);
-    color: var(--primary-color);
+}
+
+.stat-card[data-color="blue"] .stat-icon {
+    background: var(--card-blue-icon);
+    color: white;
 }
 
 .stat-card[data-color="teal"] {
     background: linear-gradient(135deg, var(--card-teal-bg) 0%, #E1F0EF 100%);
-    color: var(--primary-color);
+}
+
+.stat-card[data-color="teal"] .stat-icon {
+    background: var(--card-teal-icon);
+    color: white;
 }
 
 .stat-card[data-color="yellow"] {
     background: linear-gradient(135deg, var(--card-yellow-bg) 0%, #FEF9E7 100%);
-    color: var(--card-yellow-icon);
+}
+
+.stat-card[data-color="yellow"] .stat-icon {
+    background: var(--card-yellow-icon);
+    color: white;
 }
 
 .stat-card[data-color="red"] {
     background: linear-gradient(135deg, var(--card-red-bg) 0%, #FDEDED 100%);
-    color: var(--card-red-icon);
+}
+
+.stat-card[data-color="red"] .stat-icon {
+    background: var(--card-red-icon);
+    color: white;
 }
 
 .stat-card[data-color="orange"] {
     background: linear-gradient(135deg, var(--card-orange-bg) 0%, #FEF5ED 100%);
-    color: var(--card-orange-icon);
+}
+
+.stat-card[data-color="orange"] .stat-icon {
+    background: var(--card-orange-icon);
+    color: white;
 }
 
 .stat-card .icon {
-    width: 1.75rem;
-    height: 1.75rem;
-    margin-bottom: 1rem;
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
 .stat-card p {

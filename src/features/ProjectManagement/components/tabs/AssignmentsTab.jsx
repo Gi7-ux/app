@@ -14,7 +14,7 @@ const TaskItem = ({ task, onUpdate, onDelete, freelancers }) => {
             />
             <select value={task.assignedTo} onChange={e => onUpdate({ ...task, assignedTo: e.target.value })}>
                 <option value="Not Assigned">Not Assigned</option>
-                {freelancers.map(f => <option key={f.email || f.name} value={f.name}>{f.name}</option>)}
+                {freelancers && Array.isArray(freelancers) && freelancers.map(f => <option key={f.email || f.name} value={f.name}>{f.name}</option>)}
             </select>
             <select value={task.status} onChange={e => onUpdate({ ...task, status: e.target.value })}>
                 <option value="To Do">To Do</option>
@@ -121,12 +121,14 @@ export const AssignmentsTab = ({ project, onUpdateProject }) => {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setFreelancers(data);
+                    setFreelancers(Array.isArray(data) ? data : []);
                 } else {
                     console.error('Failed to fetch freelancers:', response.status, response.statusText);
+                    setFreelancers([]); // Ensure it's always an array
                 }
             } catch (error) {
                 console.error('Error fetching freelancers:', error);
+                setFreelancers([]); // Ensure it's always an array
             }
         };
         fetchFreelancers();

@@ -6,6 +6,7 @@ import { NAV_ITEMS as ADMIN_NAV } from '../config/adminNavigation.jsx';
 import { CLIENT_NAV_ITEMS } from '../config/clientNavigation.jsx';
 import { FREELANCER_NAV_ITEMS } from '../config/freelancerNavigation.jsx';
 import { NotificationBell } from '../components/NotificationBell.jsx';
+import { ThemedSquaresBackground } from '../components/ThemedSquaresBackground.jsx';
 
 const getNavItems = (role) => {
     switch (role) {
@@ -52,7 +53,7 @@ Sidebar.propTypes = {
 const Header = ({ onLogout }) => (
     <header className="top-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="header-button">{ICONS.overview}<span>Dashboard</span></button>
+            <button className="header-button active">{ICONS.overview}<span>Dashboard</span></button>
             <button className="header-button">{ICONS.profile}<span>My Profile</span></button>
             <button className="header-button">{ICONS.messages}<span>Messages</span></button>
         </div>
@@ -114,6 +115,17 @@ const Dashboard = ({ userRole, onLogout }) => {
 
     return (
         <div className="app-shell">
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 0
+            }}>
+                <ThemedSquaresBackground userRole={userRole} className="dashboard-background" />
+            </div>
             <Sidebar user={user} navItems={navItems} currentPage={currentPage} setCurrentPage={setCurrentPage} />
             <div className="page-container">
                 <Header onLogout={onLogout} />

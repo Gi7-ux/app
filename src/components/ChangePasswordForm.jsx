@@ -43,6 +43,8 @@ export const ChangePasswordForm = () => {
         <div className="card" style={{ marginTop: '2rem' }}>
             <h3 className="card-header">Change Password</h3>
             <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
+                {/* Hidden username field for better accessibility */}
+                <input type="text" name="username" value="" autoComplete="username" style={{ display: 'none' }} readOnly />
                 <div className="input-group">
                     <label htmlFor="currentPassword">Current Password</label>
                     <input id="currentPassword" type="password" name="current" value={passwords.current} onChange={handleChange} required autoComplete="current-password" />

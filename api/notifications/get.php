@@ -1,6 +1,11 @@
 <?php
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
 
 require_once '../core/database.php';
 require_once '../core/utils.php';
@@ -17,7 +22,7 @@ if ($db === null) {
 $data = validate_token();
 $user_id = $data->id;
 
-$query = "SELECT id, message, link, is_read, created_at FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 10";
+$query = "SELECT id, title, message, type, is_read, created_at FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 10";
 
 $stmt = $db->prepare($query);
 $stmt->bindParam(':user_id', $user_id);

@@ -49,11 +49,11 @@ if ($jwt) {
         }
         // --- End Permission Check ---
         
-        $query = "SELECT f.id, f.name, f.path, f.size, f.type, f.uploaded_at, u.name as uploader_name, u.id as uploader_id
+        $query = "SELECT f.id, f.filename as name, f.file_path as path, f.file_size as size, f.mime_type as type, f.created_at as uploaded_at, u.name as uploader_name, u.id as uploader_id
                   FROM files f
-                  JOIN users u ON f.uploader_id = u.id
+                  JOIN users u ON f.uploaded_by = u.id
                   WHERE f.project_id = :project_id
-                  ORDER BY f.uploaded_at DESC";
+                  ORDER BY f.created_at DESC";
         
         $stmt = $db->prepare($query);
         $stmt->bindParam(':project_id', $project_id);

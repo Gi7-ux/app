@@ -4,13 +4,13 @@
     --primary-dark: #4A7F72;
     --primary-light: #7BB3A6;
 
-    /* Sidebar colors updated to match theme */
+    /* Sidebar colors updated to match green theme throughout */
     --sidebar-bg: #2B3445;
     --sidebar-text: #A6B0C3;
-    --sidebar-hover-bg: #343D4E;
+    --sidebar-hover-bg: rgba(91, 154, 139, 0.15);
     --sidebar-active-bg: #5B9A8B;
     --sidebar-active-text: #ffffff;
-    --sidebar-profile-bg: rgba(255, 255, 255, 0.05);
+    --sidebar-profile-bg: rgba(91, 154, 139, 0.1);
 
     /* Header colors */
     --header-bg: #ffffff;
@@ -55,6 +55,15 @@
     /* Typography colors */
     --text-primary: #1F2937;
     --text-secondary: #6B7281;
+
+    /* Additional colors */
+    --white-color: #ffffff;
+    --border-color-light: #E5E7EB;
+    --secondary-background-light: #F9FAFB;
+    --secondary-button-background: #6B7281;
+    --secondary-button-hover-background: #4B5563;
+    --success-color: #10B981;
+    --success-hover-color: #059669;
 
     --logo-color: #5B9A8B;
 }

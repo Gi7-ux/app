@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 .gemini
 src\test
+*.test.jsx
+.aider*

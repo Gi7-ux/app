@@ -27,21 +27,99 @@ if ($jwt) {
 
         if ($decoded->data->role === 'admin' || $decoded->data->id == $data->id) {
             if (!empty($data->id)) {
-                $query = "UPDATE users SET name = :name, phone = :phone, company = :company, rate = :rate WHERE id = :id";
-                $stmt = $db->prepare($query);
-
-                $stmt->bindParam(':name', $data->name);
-                $stmt->bindParam(':phone', $data->phone);
-                $stmt->bindParam(':company', $data->company);
-                $stmt->bindParam(':rate', $data->rate);
-                $stmt->bindParam(':id', $data->id);
-
-                if ($stmt->execute()) {
-                    http_response_code(200);
-                    echo json_encode(array("message" => "User was updated."));
+                // Handle avatar data if provided
+                $avatarPath = null;
+                if (!empty($data->avatar) && strpos($data->avatar, 'data:image') === 0) {
+                    // Process base64 image data
+                    $imageData = $data->avatar;
+                    $imageType = 'jpg'; // Default to jpg
+                    
+                    if (preg_match('/data:image\/([a-zA-Z0-9]+);base64,/', $imageData, $matches)) {
+                        $imageType = $matches[1];
+                    }
+                    
+                    // Remove the data:image/...; prefix
+                    $imageData = preg_replace('/data:image\/[a-zA-Z0-9]+;base64,/', '', $imageData);
+                    $imageData = base64_decode($imageData);
+                    
+                    if ($imageData !== false) {
+                        // Create uploads directory if it doesn't exist
+                        $uploadDir = '../uploads/avatars/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        
+                        // Generate unique filename
+                        $filename = 'avatar_' . $data->id . '_' . time() . '.' . $imageType;
+                        $avatarPath = $uploadDir . $filename;
+                        
+                        if (file_put_contents($avatarPath, $imageData)) {
+                            // Store relative path for database
+                            $avatarPath = 'uploads/avatars/' . $filename;
+                        } else {
+                            $avatarPath = null;
+                        }
+                    }
+                }
+                
+                // Build the update query dynamically based on provided fields
+                $updateFields = [];
+                $params = [':id' => $data->id];
+                
+                if (isset($data->name)) {
+                    $updateFields[] = 'name = :name';
+                    $params[':name'] = $data->name;
+                }
+                
+                if (isset($data->phone)) {
+                    $updateFields[] = 'phone = :phone';
+                    $params[':phone'] = $data->phone;
+                }
+                
+                if (isset($data->company)) {
+                    $updateFields[] = 'company = :company';
+                    $params[':company'] = $data->company;
+                }
+                
+                if (isset($data->rate)) {
+                    $updateFields[] = 'rate = :rate';
+                    $params[':rate'] = $data->rate;
+                }
+                
+                if (isset($data->role) && $decoded->data->role === 'admin') {
+                    $updateFields[] = 'role = :role';
+                    $params[':role'] = $data->role;
+                }
+                
+                if ($avatarPath !== null) {
+                    $updateFields[] = 'avatar = :avatar';
+                    $params[':avatar'] = $avatarPath;
+                }
+                
+                // Handle skills array
+                if (isset($data->skills) && is_array($data->skills)) {
+                    $skillsJson = json_encode($data->skills);
+                    $updateFields[] = 'skills = :skills';
+                    $params[':skills'] = $skillsJson;
+                }
+                
+                if (!empty($updateFields)) {
+                    $query = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = :id";
+                    $stmt = $db->prepare($query);
+                    
+                    if ($stmt->execute($params)) {
+                        http_response_code(200);
+                        echo json_encode(array(
+                            "message" => "User was updated.",
+                            "avatar" => $avatarPath
+                        ));
+                    } else {
+                        http_response_code(503);
+                        echo json_encode(array("message" => "Unable to update user."));
+                    }
                 } else {
-                    http_response_code(503);
-                    echo json_encode(array("message" => "Unable to update user."));
+                    http_response_code(400);
+                    echo json_encode(array("message" => "No valid fields to update."));
                 }
             } else {
                 http_response_code(400);
