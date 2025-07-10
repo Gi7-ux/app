@@ -112,3 +112,17 @@ CREATE TABLE IF NOT EXISTS `messages` (
     FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL -- If file is deleted, reference is removed
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- TICKETS TABLE
+CREATE TABLE IF NOT EXISTS tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL, -- Stores values like GENERAL_INQUIRY, TECHNICAL_ISSUE, etc.
+    priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+    status ENUM('Open', 'In Progress', 'Resolved', 'Closed') DEFAULT 'Open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- If user is deleted, their tickets are also deleted
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
