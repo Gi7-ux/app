@@ -101,7 +101,11 @@ describe('ProjectDetailsModal', () => {
 
         render(<ProjectDetailsModal {...defaultProps} project={projectWithMissingData} />);
 
-        expect(screen.getByText('N/A')).toBeInTheDocument();
+        // Expect multiple 'N/A' texts for budget, spend, deadline, client, status
+        const naElements = screen.getAllByText('N/A');
+        expect(naElements.length).toBeGreaterThanOrEqual(5);
+        naElements.forEach(el => expect(el).toBeInTheDocument());
+
         expect(screen.getByText('No skills specified.')).toBeInTheDocument();
         expect(screen.getByText('No tasks assigned yet.')).toBeInTheDocument();
     });

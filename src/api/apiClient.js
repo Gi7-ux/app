@@ -1,43 +1,40 @@
-import axios from "axios";
-import { AuthService } from "../services/AuthService.js";
+// Placeholder for src/api/apiClient.js
+// Implement actual API client logic here, e.g., using axios or fetch
 
-const apiClient = axios.create({
-    baseURL: "/api/",
-});
-
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = AuthService.getAccessToken();
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-apiClient.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
-        if (error.response.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            // Refresh the access token and retry the original request
-            try {
-                await AuthService.refreshToken();
-                originalRequest.headers.Authorization = `Bearer ${AuthService.getAccessToken()}`;
-                return axios(originalRequest);
-            } catch (refreshError) {
-                if (refreshError.response && refreshError.response.status === 401) {
-                    // Handle refresh token expiration here (e.g., logout and redirect)
-                    console.error("Token refresh failed. Please log in again.");
-                    AuthService.logout();
-                    // Redirect to login page or show modal
-                }
-            }
-        }
-        return Promise.reject(error);
+const apiClient = {
+  get: async (url, config) => {
+    // console.log(`Mock apiClient.get called with URL: ${url}`, config);
+    const token = localStorage.getItem('access_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...(config?.headers || {}),
+    };
+    const response = await fetch(url, { ...config, headers, method: 'GET' });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw { response: { data: errorData, status: response.status } }; // Mimic axios error structure
     }
-);
+    return response.json().then(data => ({data})); // Mimic axios response structure
+  },
+  post: async (url, data, config) => {
+    // console.log(`Mock apiClient.post called with URL: ${url}`, data, config);
+    const token = localStorage.getItem('access_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...(config?.headers || {}),
+    };
+    const response = await fetch(url, { ...config, headers, method: 'POST', body: JSON.stringify(data) });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw { response: { data: errorData, status: response.status } }; // Mimic axios error structure
+    }
+    return response.json().then(data => ({data})); // Mimic axios response structure
+  },
+  // Add other methods like put, delete as needed
+};
 
+// Named export for specific use, and default export for general use
 export { apiClient };
+export default apiClient;

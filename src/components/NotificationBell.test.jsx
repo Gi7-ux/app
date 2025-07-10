@@ -85,12 +85,18 @@ describe('NotificationBell', () => {
 
     it('renders notification bell with correct unread count', async () => {
         render(<NotificationBell />);
+        // Check initial render before async data; unreadCount is 0 initially.
+        // The button's aria-label depends on unreadCount.
+        expect(screen.getByRole('button', { name: 'Notifications (0 unread)'})).toBeInTheDocument();
+
 
         await waitFor(() => {
-            expect(screen.getByLabelText('Notifications (2 unread)')).toBeInTheDocument();
+            // After fetch and state update, the label should change.
+            expect(screen.getByRole('button', { name: 'Notifications (2 unread)'})).toBeInTheDocument();
         });
 
-        expect(screen.getByText('2')).toBeInTheDocument(); // Badge count
+        // The badge text '2' should also be present.
+        expect(screen.getByText('2')).toBeInTheDocument();
     });
 
     it('fetches notifications on mount', async () => {

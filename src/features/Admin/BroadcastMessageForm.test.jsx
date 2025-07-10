@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import BroadcastMessageForm from './BroadcastMessageForm.jsx'; // Assuming correct path
 
 // Mock global fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 // Mock localStorage
 const mockLocalStorage = (() => {
     let store = {};
