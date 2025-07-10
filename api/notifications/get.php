@@ -9,6 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 require_once '../core/database.php';
 require_once '../core/utils.php';
+require_once '../migrations/run_migrations.php';
+
+// Run critical migrations to ensure database schema is up to date
+run_critical_migrations();
 
 
 $database = new Database();

@@ -51,10 +51,13 @@ ALTER TABLE tasks ADD CONSTRAINT IF NOT EXISTS fk_assignment_id FOREIGN KEY (ass
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    message VARCHAR(255) NOT NULL,
-    link VARCHAR(255),
+    title VARCHAR(255) DEFAULT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'general',
+    link VARCHAR(255) DEFAULT NULL,
     is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 -- FILES TABLE (Assuming it exists, if not, define it here)
@@ -70,8 +73,7 @@ CREATE TABLE IF NOT EXISTS `files` (
     `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
     FOREIGN KEY (`uploader_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- MESSAGE THREADS TABLE
 -- Stores information about a conversation thread.
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `message_threads` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL -- If project is deleted, thread might remain but unlinked or handled by app logic
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- MESSAGE THREAD PARTICIPANTS TABLE
 -- Links users to message threads.
@@ -96,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `message_thread_participants` (
     FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE, -- If thread is deleted, participant entries are removed
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE, -- If user is deleted, participant entries are removed
     UNIQUE KEY `unique_participant` (`thread_id`, `user_id`) -- A user can only be a participant in a thread once
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- MESSAGES TABLE
 -- Stores individual messages within a thread.
@@ -111,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
     FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE, -- If thread is deleted, messages are removed
     FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL -- If file is deleted, reference is removed
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- TICKETS TABLE
 CREATE TABLE IF NOT EXISTS tickets (
@@ -120,9 +122,20 @@ CREATE TABLE IF NOT EXISTS tickets (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     category VARCHAR(100) NOT NULL, -- Stores values like GENERAL_INQUIRY, TECHNICAL_ISSUE, etc.
-    priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
-    status ENUM('Open', 'In Progress', 'Resolved', 'Closed') DEFAULT 'Open',
+    priority ENUM ('Low', 'Medium', 'High') DEFAULT 'Medium',
+    status ENUM ('Open', 'In Progress', 'Resolved', 'Closed') DEFAULT 'Open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- If user is deleted, their tickets are also deleted
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE -- If user is deleted, their tickets are also deleted
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- PROJECT MESSAGES TABLE (Legacy table for backward compatibility)
+CREATE TABLE IF NOT EXISTS `project_messages` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT NOT NULL,
+    `sender` VARCHAR(255) NOT NULL,
+    `text` TEXT NOT NULL,
+    `type` VARCHAR(50) DEFAULT 'project_communication',
+    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

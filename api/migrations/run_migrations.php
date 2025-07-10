@@ -17,6 +17,8 @@ function run_critical_migrations() {
     }
     
     try {
+        $db->beginTransaction();
+        
         // Check if users table has the name column
         $check_query = "SHOW COLUMNS FROM `users` LIKE 'name'";
         $check_stmt = $db->prepare($check_query);
@@ -105,6 +107,84 @@ function run_critical_migrations() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
             $db->exec($create_tickets);
             file_put_contents(__DIR__ . '/../logs/debug.log', "Created tickets table\n", FILE_APPEND);
+        }
+
+        // Check if project_messages table exists (legacy table for project communication)
+        $project_messages_check = "SHOW TABLES LIKE 'project_messages'";
+        $project_messages_stmt = $db->prepare($project_messages_check);
+        $project_messages_stmt->execute();
+
+        if ($project_messages_stmt->rowCount() == 0) {
+            // Create project_messages table for backward compatibility
+            $create_project_messages = "CREATE TABLE IF NOT EXISTS `project_messages` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `project_id` INT NOT NULL,
+                `sender` VARCHAR(255) NOT NULL,
+                `text` TEXT NOT NULL,
+                `type` VARCHAR(50) DEFAULT 'project_communication',
+                `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            $db->exec($create_project_messages);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Created project_messages table\n", FILE_APPEND);
+        }
+
+        // Check if the project_messages table has the type column
+        $project_messages_type_check = "SHOW COLUMNS FROM `project_messages` LIKE 'type'";
+        $project_messages_type_stmt = $db->prepare($project_messages_type_check);
+        $project_messages_type_stmt->execute();
+
+        if ($project_messages_type_stmt->rowCount() == 0) {
+            // Add type column to project_messages table
+            $add_type_column = "ALTER TABLE `project_messages` ADD COLUMN `type` VARCHAR(50) DEFAULT 'project_communication'";
+            $db->exec($add_type_column);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added type column to project_messages table\n", FILE_APPEND);
+        }
+
+        // Check if notifications table exists
+        $notifications_check = "SHOW TABLES LIKE 'notifications'";
+        $notifications_stmt = $db->prepare($notifications_check);
+        $notifications_stmt->execute();
+
+        if ($notifications_stmt->rowCount() == 0) {
+            // Create notifications table
+            $create_notifications = "CREATE TABLE IF NOT EXISTS `notifications` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `title` VARCHAR(255) DEFAULT NULL,
+                `message` TEXT NOT NULL,
+                `type` VARCHAR(50) DEFAULT 'general',
+                `link` VARCHAR(255) DEFAULT NULL,
+                `is_read` BOOLEAN DEFAULT FALSE,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            $db->exec($create_notifications);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Created notifications table\n", FILE_APPEND);
+        }
+
+        // Check if notifications table has title column
+        $notifications_title_check = "SHOW COLUMNS FROM `notifications` LIKE 'title'";
+        $notifications_title_stmt = $db->prepare($notifications_title_check);
+        $notifications_title_stmt->execute();
+
+        if ($notifications_title_stmt->rowCount() == 0) {
+            // Add title column to notifications table
+            $add_title_column = "ALTER TABLE `notifications` ADD COLUMN `title` VARCHAR(255) DEFAULT NULL AFTER `user_id`";
+            $db->exec($add_title_column);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added title column to notifications table\n", FILE_APPEND);
+        }
+
+        // Check if notifications table has type column
+        $notifications_type_check = "SHOW COLUMNS FROM `notifications` LIKE 'type'";
+        $notifications_type_stmt = $db->prepare($notifications_type_check);
+        $notifications_type_stmt->execute();
+
+        if ($notifications_type_stmt->rowCount() == 0) {
+            // Add type column to notifications table
+            $add_type_column_notifications = "ALTER TABLE `notifications` ADD COLUMN `type` VARCHAR(50) DEFAULT 'general' AFTER `message`";
+            $db->exec($add_type_column_notifications);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added type column to notifications table\n", FILE_APPEND);
         }
 
         $db->commit();
