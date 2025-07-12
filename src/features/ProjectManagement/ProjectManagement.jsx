@@ -48,6 +48,7 @@ export const ProjectManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [clientFilter, setClientFilter] = useState('All');
+    // eslint-disable-next-line no-unused-vars
     const [freelancerFilter, setFreelancerFilter] = useState('All');
 
     const fetchProjects = async () => {
