@@ -27,6 +27,7 @@ vi.mock('../../../data/data.js', () => ({
     },
   // This mock is no longer directly used by the component as it fetches.
   // It can be used as a base for fetch mock responses if desired.
+  },
 }));
 
 // Mock global fetch
