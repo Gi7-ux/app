@@ -81,7 +81,8 @@ function ProjectForm({ project, onSave, onCancel, clients, freelancers }) {
         onSave({
             ...formData,
             client_id: formData.clientId,
-            freelancer_id: formData.freelancerId
+            freelancer_id: formData.freelancerId,
+            originalSkills: project?.skills || []
         });
     };
 

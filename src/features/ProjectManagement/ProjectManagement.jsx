@@ -144,6 +144,14 @@ export const ProjectManagement = () => {
             });
             const data = await response.json();
             if (response.ok) {
+                // Handle skill updates for existing projects
+                if (editingProject && formData.originalSkills && formData.skills) {
+                    await updateProjectSkills(editingProject.id, formData.originalSkills, formData.skills, token);
+                } else if (!editingProject && formData.skills && formData.skills.length > 0) {
+                    // For new projects, add all skills
+                    await addProjectSkills(data.project_id || data.id, formData.skills, token);
+                }
+                
                 fetchProjects();
                 setIsModalOpen(false);
             } else {
@@ -151,6 +159,48 @@ export const ProjectManagement = () => {
             }
         } catch {
             setError('An error occurred while saving project.');
+        }
+    };
+
+    const updateProjectSkills = async (projectId, originalSkills, newSkills, token) => {
+        try {
+            // Find skills to add and remove
+            const skillsToAdd = newSkills.filter(skill => !originalSkills.includes(skill));
+            const skillsToRemove = originalSkills.filter(skill => !newSkills.includes(skill));
+
+            // Add new skills
+            for (const skill of skillsToAdd) {
+                await fetch('/api/projects/skills/add.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ project_id: projectId, skill_name: skill })
+                });
+            }
+
+            // Remove skills
+            for (const skill of skillsToRemove) {
+                await fetch('/api/projects/skills/remove.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ project_id: projectId, skill_name: skill })
+                });
+            }
+        } catch (error) {
+            console.error('Error updating project skills:', error);
+        }
+    };
+
+    const addProjectSkills = async (projectId, skills, token) => {
+        try {
+            for (const skill of skills) {
+                await fetch('/api/projects/skills/add.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ project_id: projectId, skill_name: skill })
+                });
+            }
+        } catch (error) {
+            console.error('Error adding project skills:', error);
         }
     };
 
