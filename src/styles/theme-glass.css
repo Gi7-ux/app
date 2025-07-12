@@ -1,0 +1,69 @@
+:root {
+    --primary-color: #00A8E8;
+    --primary-dark: #007EA7;
+    --primary-light: #00BFFF;
+
+    --sidebar-bg: rgba(0, 0, 0, 0.2);
+    --sidebar-text: #E5E7EB;
+    --sidebar-hover-bg: rgba(0, 168, 232, 0.2);
+    --sidebar-active-bg: rgba(0, 168, 232, 0.5);
+    --sidebar-active-text: #ffffff;
+    --sidebar-profile-bg: rgba(0, 168, 232, 0.1);
+
+    --header-bg: rgba(255, 255, 255, 0.1);
+    --header-border: rgba(255, 255, 255, 0.2);
+    --header-btn-bg: rgba(255, 255, 255, 0.1);
+    --header-btn-text: #E5E7EB;
+
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-blue-bg: rgba(0, 168, 232, 0.1);
+    --card-teal-bg: rgba(0, 168, 232, 0.1);
+    --card-yellow-bg: rgba(234, 179, 8, 0.1);
+    --card-red-bg: rgba(239, 68, 68, 0.1);
+    --card-orange-bg: rgba(249, 115, 22, 0.1);
+
+    --card-blue-icon: #00A8E8;
+    --card-teal-icon: #00A8E8;
+    --card-yellow-icon: #EAB308;
+    --card-red-icon: #EF4444;
+    --card-orange-icon: #F97316;
+
+    --actions-bg: rgba(0, 0, 0, 0.1);
+    --action-btn-bg: #00A8E8;
+    --action-btn-hover-bg: #007EA7;
+    --action-link-text: #E5E7EB;
+
+    --background: #0D1117;
+    --text-primary: #E5E7EB;
+    --text-secondary: #9CA3AF;
+}
+
+body {
+    background-image: url('https://images.unsplash.com/photo-1530569628389-54817a363327?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.glass-effect {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.sidebar {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.header {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}

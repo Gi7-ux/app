@@ -50,7 +50,7 @@ Sidebar.propTypes = {
     setCurrentPage: PropTypes.func.isRequired,
 };
 
-const Header = ({ onLogout }) => (
+const Header = ({ onLogout, toggleTheme, theme }) => (
     <header className="top-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button className="header-button active">{ICONS.overview}<span>Dashboard</span></button>
@@ -59,6 +59,10 @@ const Header = ({ onLogout }) => (
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <NotificationBell />
+            <button className="header-button" onClick={toggleTheme}>
+                {theme === 'default' ? ICONS.moon : ICONS.sun}
+                <span>{theme === 'default' ? 'Dark Mode' : 'Light Mode'}</span>
+            </button>
             <button className="header-button logout-button" onClick={onLogout}>{ICONS.logout}<span>Logout</span></button>
         </div>
     </header>
@@ -66,9 +70,11 @@ const Header = ({ onLogout }) => (
 
 Header.propTypes = {
     onLogout: PropTypes.func.isRequired,
+    toggleTheme: PropTypes.func.isRequired,
+    theme: PropTypes.string.isRequired,
 };
 
-const Dashboard = ({ userRole, onLogout }) => {
+const Dashboard = ({ userRole, onLogout, theme, toggleTheme }) => {
     const [currentPage, setCurrentPage] = useState('dashboard');
     const [user, setUser] = useState(null);
     const navItems = getNavItems(userRole);

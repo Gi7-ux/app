@@ -17,6 +17,7 @@ const ProtectedRoute = ({ children }) => {
 export const App = () => {
     // This state is to trigger re-render on login/logout
     const [isAuthenticated, setIsAuthenticated] = useState(AuthService.isAuthenticated());
+    const [theme, setTheme] = useState('default');
 
     const handleLogin = (role, accessToken, refreshToken) => {
         AuthService.login(accessToken, refreshToken, role);
@@ -28,6 +29,23 @@ export const App = () => {
         AuthService.logout();
         setIsAuthenticated(false);
         // Navigation to login will be handled by ProtectedRoute
+    };
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'default' ? 'glass' : 'default';
+        setTheme(newTheme);
+        if (newTheme === 'glass') {
+            const link = document.createElement('link');
+            link.href = '/src/styles/theme-glass.css';
+            link.rel = 'stylesheet';
+            link.id = 'glass-theme';
+            document.head.appendChild(link);
+        } else {
+            const link = document.getElementById('glass-theme');
+            if (link) {
+                document.head.removeChild(link);
+            }
+        }
     };
 
     // Effect to listen to storage changes for logout from other tabs (optional but good UX)
@@ -61,6 +79,8 @@ export const App = () => {
                         <Dashboard
                             userRole={AuthService.getRole()} // Get role directly inside dashboard if needed per page
                             onLogout={handleLogout}
+                            theme={theme}
+                            toggleTheme={toggleTheme}
                         />
                     </ProtectedRoute>
                 }
