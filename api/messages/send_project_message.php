@@ -176,11 +176,11 @@ try {
     $db->rollBack();
     http_response_code(500);
     error_log("Send message failed: " . $e->getMessage());
-    echo json_encode(["message" => "Failed to send message: Database error.", "error" => $e->getMessage()]);
+    echo json_encode(["message" => "Failed to send message: Database error."]);
 } catch (Exception $e) {
     $db->rollBack();
     http_response_code(500);
     error_log("Send message failed: " . $e->getMessage());
-    echo json_encode(["message" => "An unexpected error occurred.", "error" => $e->getMessage()]);
+    echo json_encode(["message" => "An unexpected error occurred."]);
 }
 ?>
