@@ -44,7 +44,7 @@ if (!$data || !isset($data['project_id']) || !isset($data['text']) || !isset($da
 }
 
 $project_id = (int)$data['project_id'];
-$text = trim($data['text']);
+$text = htmlspecialchars(trim($data['text']), ENT_QUOTES, 'UTF-8');
 $thread_type = $data['thread_type'];
 $allowed_thread_types = ['project_client_admin_freelancer', 'project_admin_client', 'project_admin_freelancer'];
 
