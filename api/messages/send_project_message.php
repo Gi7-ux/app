@@ -112,8 +112,8 @@ try {
         $participant_stmt = $db->prepare("INSERT INTO message_thread_participants (thread_id, user_id) VALUES (:thread_id, :user_id)");
         foreach ($participants as $p_id) {
             if ($p_id) {
-                $participant_stmt->bindParam(':thread_id', $thread_id);
-                $participant_stmt->bindParam(':user_id', $p_id);
+                $participant_stmt->bindValue(':thread_id', $thread_id, PDO::PARAM_INT);
+                $participant_stmt->bindValue(':user_id', $p_id, PDO::PARAM_INT);
                 $participant_stmt->execute();
             }
         }
