@@ -19,6 +19,12 @@ const TaskItem = ({ task, onUpdate, onDelete, freelancers, onSaveTask, assignmen
     };
 
     const handleSave = async () => {
+        // Validate task description is not empty or whitespace
+        if (!editedTask.description || editedTask.description.trim() === "") {
+            alert("Task description cannot be empty.");
+            return;
+        }
+
         // If assigned_to_name is "Not Assigned" or empty, set assigned_to_id to null
         let finalTaskData = { ...editedTask };
         if (finalTaskData.assigned_to_id === "Not Assigned" || finalTaskData.assigned_to_id === "") {
