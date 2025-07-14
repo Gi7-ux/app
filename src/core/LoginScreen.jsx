@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { BirdIcon } from '../assets/BirdIcon.jsx';
 import { OptimizedSquaresBackground } from '../components/OptimizedSquaresBackground.jsx';
 import LiquidGlass from 'liquid-glass-react';
-import { LiquidGlassButton, LiquidGlassInput } from '../components/LiquidGlassComponents.jsx';
 import { ForgotPasswordForm } from '../components/ForgotPasswordForm.jsx';
 
 export const LoginScreen = ({ onLogin }) => {
@@ -67,25 +66,26 @@ export const LoginScreen = ({ onLogin }) => {
             </div>
             <div className="login-card">
                 <LiquidGlass
-                    displacementScale={64}
-                    blurAmount={0.12}
-                    saturation={130}
-                    aberrationIntensity={2}
-                    elasticity={0.25}
-                    cornerRadius={24}
+                    displacementScale={80}
+                    blurAmount={0.18}
+                    saturation={145}
+                    aberrationIntensity={2.5}
+                    elasticity={0.3}
+                    cornerRadius={28}
                     padding="0"
                     style={{
                         width: '100%',
-                        maxWidth: '420px',
+                        maxWidth: '440px',
                         margin: '0 auto',
                         position: 'relative',
                         zIndex: 10,
-                        background: 'rgba(30, 41, 59, 0.45)',
-                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                        border: '1px solid rgba(255,255,255,0.18)'
+                        background: 'rgba(30, 41, 59, 0.4)',
+                        boxShadow: '0 16px 64px 0 rgba(31, 38, 135, 0.3), 0 4px 16px 0 rgba(0, 0, 0, 0.2)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(20px) saturate(180%)'
                     }}
                 >
-                    <div style={{ padding: '40px', width: '100%' }}>
+                    <div style={{ padding: '48px', width: '100%' }}>
                         <div className="login-header">
                             <BirdIcon className="login-logo" style={{ color: 'white', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
                             <h1 className="login-title" style={{ color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)', marginBottom: '8px' }}>Architex Axis</h1>
@@ -96,69 +96,166 @@ export const LoginScreen = ({ onLogin }) => {
                         <form onSubmit={handleLogin} className="login-form">
                             <div className="form-group">
                                 <label htmlFor="email" className="form-label" style={{ color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.3)', marginBottom: '8px', display: 'block' }}>Email address</label>
-                                <LiquidGlassInput
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    placeholder="admin@architex.co.za"
-                                    autoComplete="email"
-                                    autoFocus
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    style={{ marginBottom: '16px' }}
-                                />
+                                <LiquidGlass
+                                    displacementScale={40}
+                                    blurAmount={0.15}
+                                    saturation={120}
+                                    aberrationIntensity={1.5}
+                                    elasticity={0.2}
+                                    cornerRadius={16}
+                                    padding="12px 16px"
+                                    style={{
+                                        width: '100%',
+                                        marginBottom: '16px',
+                                        background: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        backdropFilter: 'blur(12px) saturate(150%)'
+                                    }}
+                                >
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        placeholder="admin@architex.co.za"
+                                        autoComplete="email"
+                                        autoFocus
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            color: 'white',
+                                            fontSize: '14px',
+                                            width: '100%',
+                                            padding: '0',
+                                            fontFamily: 'inherit',
+                                            '::placeholder': {
+                                                color: 'rgba(255, 255, 255, 0.6)'
+                                            }
+                                        }}
+                                    />
+                                </LiquidGlass>
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="password" className="form-label" style={{ color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.3)', marginBottom: '8px', display: 'block' }}>Password</label>
-                                <LiquidGlassInput
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    style={{ marginBottom: '16px' }}
-                                />
+                                <LiquidGlass
+                                    displacementScale={40}
+                                    blurAmount={0.15}
+                                    saturation={120}
+                                    aberrationIntensity={1.5}
+                                    elasticity={0.2}
+                                    cornerRadius={16}
+                                    padding="12px 16px"
+                                    style={{
+                                        width: '100%',
+                                        marginBottom: '16px',
+                                        background: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        backdropFilter: 'blur(12px) saturate(150%)'
+                                    }}
+                                >
+                                    <input
+                                        id="password"
+                                        type="password"
+                                        name="password"
+                                        placeholder="••••••••"
+                                        autoComplete="current-password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            outline: 'none',
+                                            color: 'white',
+                                            fontSize: '14px',
+                                            width: '100%',
+                                            padding: '0',
+                                            fontFamily: 'inherit',
+                                            '::placeholder': {
+                                                color: 'rgba(255, 255, 255, 0.6)'
+                                            }
+                                        }}
+                                    />
+                                </LiquidGlass>
                             </div>
 
                             {error && (
                                 <LiquidGlass
-                                    blurAmount={0.18}
-                                    cornerRadius={12}
+                                    displacementScale={30}
+                                    blurAmount={0.2}
+                                    saturation={110}
+                                    aberrationIntensity={1}
+                                    elasticity={0.15}
+                                    cornerRadius={16}
+                                    padding="12px 16px"
                                     style={{
                                         marginBottom: '16px',
-                                        background: 'rgba(239, 68, 68, 0.25)',
-                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        background: 'rgba(239, 68, 68, 0.2)',
+                                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                                        backdropFilter: 'blur(16px) saturate(140%)'
                                     }}
                                 >
                                     <div style={{
                                         color: '#ffffff',
                                         textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                                        padding: '8px',
-                                        fontSize: '14px'
+                                        fontSize: '14px',
+                                        margin: '0'
                                     }}>
                                         {error}
                                     </div>
                                 </LiquidGlass>
                             )}
 
-                            <LiquidGlassButton
-                                type="submit"
-                                variant="primary"
-                                size="large"
-                                disabled={isLoading}
+                            <LiquidGlass
+                                displacementScale={60}
+                                blurAmount={0.16}
+                                saturation={135}
+                                aberrationIntensity={2.2}
+                                elasticity={0.35}
+                                cornerRadius={18}
+                                padding="0"
                                 style={{
                                     width: '100%',
                                     marginBottom: '16px',
-                                    minHeight: '48px'
+                                    minHeight: '48px',
+                                    background: 'linear-gradient(135deg, rgba(91, 154, 139, 0.8) 0%, rgba(91, 154, 139, 0.6) 100%)',
+                                    border: '1px solid rgba(91, 154, 139, 0.4)',
+                                    backdropFilter: 'blur(16px) saturate(160%)',
+                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                    opacity: isLoading ? 0.6 : 1,
+                                    transition: 'all 0.3s ease'
                                 }}
                             >
-                                {isLoading ? 'Signing In...' : 'Sign In'}
-                            </LiquidGlassButton>
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        fontWeight: '600',
+                                        cursor: 'inherit',
+                                        padding: '14px 24px',
+                                        width: '100%',
+                                        height: '100%',
+                                        minHeight: '48px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                                        fontFamily: 'inherit',
+                                        borderRadius: '18px',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    {isLoading ? 'Signing In...' : 'Sign In'}
+                                </button>
+                            </LiquidGlass>
 
                             <p className="signup-link" style={{
                                 color: 'rgba(255,255,255,0.8)',
