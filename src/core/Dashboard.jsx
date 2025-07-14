@@ -9,6 +9,7 @@ import { NotificationBell } from '../components/NotificationBell.jsx';
 import { ThemedSquaresBackground } from '../components/ThemedSquaresBackground.jsx';
 import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper.jsx';
 import { LiquidGlassNavItem, LiquidGlassButton } from '../components/LiquidGlassComponents.jsx';
+import ShadcnDashboard from './ShadcnDashboard.jsx';
 
 const getNavItems = (role) => {
     switch (role) {
@@ -146,6 +147,16 @@ Header.propTypes = {
 };
 
 const Dashboard = ({ userRole, onLogout }) => {
+    // Feature flag to enable Shadcn dashboard
+    const useShadcnDashboard = process.env.REACT_APP_USE_SHADCN_DASHBOARD === 'true' || 
+                               localStorage.getItem('useShadcnDashboard') === 'true';
+
+    // If using Shadcn dashboard, render it directly
+    if (useShadcnDashboard) {
+        return <ShadcnDashboard userRole={userRole} onLogout={onLogout} />;
+    }
+
+    // Original dashboard code continues below
     const [currentPage, setCurrentPage] = useState('dashboard');
     const [user, setUser] = useState(null);
     const navItems = getNavItems(userRole);

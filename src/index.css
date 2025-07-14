@@ -12,3 +12,7 @@
 @import './features/ProjectManagement/components/tabs/FilesTab.css';
 @import './features/ProjectManagement/components/tabs/MessagesTab.css';
 @import './features/ProjectManagement/components/tabs/ProjectDetailsOverview.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
