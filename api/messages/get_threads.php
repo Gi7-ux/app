@@ -5,6 +5,10 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once '../core/database.php';
 require_once '../core/config.php';
 require_once '../vendor/autoload.php';
+require_once '../migrations/run_migrations.php';
+
+// Ensure messaging tables are properly set up
+run_critical_migrations();
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
@@ -58,7 +62,7 @@ if ($jwt) {
             extract($row);
             
             // Fetch last message for preview
-            $msg_query = "SELECT text, timestamp FROM messages WHERE thread_id = :thread_id ORDER BY timestamp DESC LIMIT 1";
+            $msg_query = "SELECT text, created_at FROM messages WHERE thread_id = :thread_id ORDER BY created_at DESC LIMIT 1";
             $msg_stmt = $db->prepare($msg_query);
             $msg_stmt->bindParam(':thread_id', $thread_id);
             $msg_stmt->execute();
@@ -71,7 +75,7 @@ if ($jwt) {
                 "projectTitle" => $project_title,
                 "participants" => explode(',', $participants),
                 "lastMessage" => $last_message ? $last_message['text'] : "No messages yet.",
-                "lastMessageTimestamp" => $last_message ? $last_message['timestamp'] : null,
+                "lastMessageTimestamp" => $last_message ? $last_message['created_at'] : null,
             );
             array_push($threads_arr, $thread_item);
         }

@@ -5,6 +5,10 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once '../core/database.php';
 require_once '../core/config.php';
 require_once '../vendor/autoload.php';
+require_once '../migrations/run_migrations.php';
+
+// Ensure messaging tables are properly set up
+run_critical_migrations();
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
@@ -131,7 +135,7 @@ try {
     $placeholders = implode(',', array_fill(0, count($target_thread_ids), '?'));
 
     // Base query
-    $query_string = "SELECT m.id, m.thread_id, m.sender_id, m.text, m.file_id, m.timestamp, m.status, u.name as sender_name, u.avatar as sender_avatar
+    $query_string = "SELECT m.id, m.thread_id, m.sender_id, m.text, m.file_id, m.created_at, m.status, u.name as sender_name, u.avatar as sender_avatar
               FROM messages m
               JOIN users u ON m.sender_id = u.id
               WHERE m.thread_id IN ({$placeholders})";
@@ -141,7 +145,7 @@ try {
         $query_string .= " AND (m.status = 'approved' OR (m.status = 'pending' AND m.sender_id = ?))";
     }
 
-    $query_string .= " ORDER BY m.timestamp ASC";
+    $query_string .= " ORDER BY m.created_at ASC";
 
     $stmt = $db->prepare($query_string);
 
@@ -166,7 +170,7 @@ try {
             "sender_avatar" => $row['sender_avatar'],
             "text" => $row['text'],
             "file_id" => $row['file_id'],
-            "timestamp" => $row['timestamp'],
+            "timestamp" => $row['created_at'],
             "status" => $row['status']
         );
         array_push($messages_arr, $message_item);

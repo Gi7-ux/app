@@ -6,6 +6,10 @@ header("Access-Control-Allow-Methods: POST");
 require_once '../core/database.php';
 require_once '../core/config.php';
 require_once '../vendor/autoload.php';
+require_once '../migrations/run_migrations.php';
+
+// Ensure messaging tables are properly set up
+run_critical_migrations();
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;

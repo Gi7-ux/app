@@ -1,144 +1,208 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import './SquaresBackground.css';
 
 export const SquaresBackground = ({
-    direction = 'right',
-    speed = 1,
-    borderColor = '#999',
-    squareSize = 40,
-    hoverFillColor = '#222',
+    direction = 'diagonal',
+    speed = 0.3,
+    borderColor = 'rgba(91, 154, 139, 0.15)',
+    squareSize = 50,
+    hoverFillColor = 'rgba(91, 154, 139, 0.1)',
     className = ''
 }) => {
     const canvasRef = useRef(null);
     const requestRef = useRef(null);
-    const numSquaresX = useRef();
-    const numSquaresY = useRef();
-    const gridOffset = useRef({ x: 0, y: 0 });
     const hoveredSquare = useRef(null);
+    const startTime = useRef(Date.now());
+    const lastResize = useRef(0);
+
+    const resizeCanvas = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+            return;
+        }
+
+        const now = Date.now();
+        if (now - lastResize.current < 100) {
+            return; // Throttle resize
+        }
+        lastResize.current = now;
+
+        const parent = canvas.parentElement;
+        if (!parent) {
+            return;
+        }
+
+        const rect = parent.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limit DPR for performance
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.imageSmoothingEnabled = false;
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) {
+            return;
+        }
+
         const ctx = canvas.getContext('2d');
+        let isAnimating = true;
 
-        const resizeCanvas = () => {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            numSquaresX.current = Math.ceil(canvas.width / squareSize) + 1;
-            numSquaresY.current = Math.ceil(canvas.height / squareSize) + 1;
-        };
-
-        window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        const drawGrid = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
-            const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
-
-            for (let x = startX; x < canvas.width + squareSize; x += squareSize) {
-                for (let y = startY; y < canvas.height + squareSize; y += squareSize) {
-                    const squareX = x - (gridOffset.current.x % squareSize);
-                    const squareY = y - (gridOffset.current.y % squareSize);
-
-                    if (
-                        hoveredSquare.current &&
-                        Math.floor((x - startX) / squareSize) === hoveredSquare.current.x &&
-                        Math.floor((y - startY) / squareSize) === hoveredSquare.current.y
-                    ) {
-                        ctx.fillStyle = hoverFillColor;
-                        ctx.fillRect(squareX, squareY, squareSize, squareSize);
-                    }
-
-                    ctx.strokeStyle = borderColor;
-                    ctx.strokeRect(squareX, squareY, squareSize, squareSize);
-                }
-            }
-
-            const gradient = ctx.createRadialGradient(
-                canvas.width / 2,
-                canvas.height / 2,
-                0,
-                canvas.width / 2,
-                canvas.height / 2,
-                Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
-            );
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Throttled resize handler
+        let resizeTimeout;
+        const handleResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (isAnimating) resizeCanvas();
+            }, 150);
         };
 
-        const updateAnimation = () => {
-            const effectiveSpeed = Math.max(speed, 0.1);
-            switch (direction) {
-                case 'right':
-                    gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
-                    break;
-                case 'left':
-                    gridOffset.current.x = (gridOffset.current.x + effectiveSpeed + squareSize) % squareSize;
-                    break;
-                case 'up':
-                    gridOffset.current.y = (gridOffset.current.y + effectiveSpeed + squareSize) % squareSize;
-                    break;
-                case 'down':
-                    gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
-                    break;
-                case 'diagonal':
-                    gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
-                    gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
-                    break;
-                default:
-                    break;
-            }
+        window.addEventListener('resize', handleResize, { passive: true });
 
-            drawGrid();
-            requestRef.current = requestAnimationFrame(updateAnimation);
-        };
-
-        const handleMouseMove = (event) => {
+        // Throttled mouse handlers with better performance
+        let mousePos = { x: -1, y: -1 };
+        const handleMouseMove = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
-
-            const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
-            const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
-
-            const hoveredSquareX = Math.floor((mouseX + gridOffset.current.x - startX) / squareSize);
-            const hoveredSquareY = Math.floor((mouseY + gridOffset.current.y - startY) / squareSize);
-
-            if (
-                !hoveredSquare.current ||
-                hoveredSquare.current.x !== hoveredSquareX ||
-                hoveredSquare.current.y !== hoveredSquareY
-            ) {
-                hoveredSquare.current = { x: hoveredSquareX, y: hoveredSquareY };
-            }
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
         };
 
         const handleMouseLeave = () => {
             hoveredSquare.current = null;
+            mousePos.x = -1;
+            mousePos.y = -1;
         };
 
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mouseleave', handleMouseLeave);
+        canvas.addEventListener('mousemove', handleMouseMove, { passive: true });
+        canvas.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+
+        // Optimized animation loop with frame skipping
+        let lastFrameTime = 0;
+        const updateAnimation = (currentTime) => {
+            if (!isAnimating) return;
+
+            // Skip frames if needed (30fps target for better performance)
+            if (currentTime - lastFrameTime < 33) {
+                requestRef.current = requestAnimationFrame(updateAnimation);
+                return;
+            }
+            lastFrameTime = currentTime;
+
+            const rect = canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) {
+                requestRef.current = requestAnimationFrame(updateAnimation);
+                return;
+            }
+
+            const elapsedTime = (currentTime - startTime.current) * speed * 0.01;
+
+            // Clear canvas efficiently
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            // Calculate offset based on direction
+            let offsetX = 0, offsetY = 0;
+            switch (direction) {
+                case 'horizontal':
+                    offsetX = (elapsedTime % squareSize);
+                    break;
+                case 'vertical':
+                    offsetY = (elapsedTime % squareSize);
+                    break;
+                case 'diagonal':
+                default:
+                    offsetX = (elapsedTime % squareSize);
+                    offsetY = (elapsedTime % squareSize);
+                    break;
+            }
+
+            // Calculate hover state efficiently
+            let hoveredCol = -1, hoveredRow = -1;
+            if (mousePos.x >= 0 && mousePos.y >= 0) {
+                hoveredCol = Math.floor((mousePos.x + offsetX) / squareSize);
+                hoveredRow = Math.floor((mousePos.y + offsetY) / squareSize);
+            }
+
+            // Set drawing styles once
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 1;
+
+            // Calculate grid bounds more efficiently
+            const startCol = Math.floor(-offsetX / squareSize) - 1;
+            const endCol = Math.ceil((rect.width - offsetX) / squareSize) + 1;
+            const startRow = Math.floor(-offsetY / squareSize) - 1;
+            const endRow = Math.ceil((rect.height - offsetY) / squareSize) + 1;
+
+            // Draw grid with path batching for better performance
+            ctx.beginPath();
+
+            for (let col = startCol; col < endCol; col++) {
+                for (let row = startRow; row < endRow; row++) {
+                    const x = col * squareSize - offsetX;
+                    const y = row * squareSize - offsetY;
+
+                    // Only process visible squares
+                    if (x + squareSize >= 0 && y + squareSize >= 0 &&
+                        x <= rect.width && y <= rect.height) {
+
+                        // Fill hovered square
+                        if (col === hoveredCol && row === hoveredRow) {
+                            ctx.fillStyle = hoverFillColor;
+                            ctx.fillRect(x, y, squareSize, squareSize);
+                        }
+
+                        // Add to stroke path
+                        ctx.rect(x, y, squareSize, squareSize);
+                    }
+                }
+            }
+
+            // Stroke all at once for better performance
+            ctx.stroke();
+
+            requestRef.current = requestAnimationFrame(updateAnimation);
+        };
 
         requestRef.current = requestAnimationFrame(updateAnimation);
 
         return () => {
-            window.removeEventListener('resize', resizeCanvas);
-            cancelAnimationFrame(requestRef.current);
+            isAnimating = false;
+            window.removeEventListener('resize', handleResize);
             canvas.removeEventListener('mousemove', handleMouseMove);
             canvas.removeEventListener('mouseleave', handleMouseLeave);
+            if (requestRef.current) {
+                cancelAnimationFrame(requestRef.current);
+            }
+            clearTimeout(resizeTimeout);
         };
-    }, [direction, speed, borderColor, hoverFillColor, squareSize]);
+    }, [direction, speed, borderColor, squareSize, hoverFillColor, resizeCanvas]);
 
-    return <canvas ref={canvasRef} className={`squares-canvas ${className}`}></canvas>;
+    return (
+        <canvas
+            ref={canvasRef}
+            className={`squares-canvas ${className}`}
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'auto',
+                zIndex: 1
+            }}
+        />
+    );
 };
 
 SquaresBackground.propTypes = {
-    direction: PropTypes.oneOf(['diagonal', 'up', 'right', 'down', 'left']),
+    direction: PropTypes.oneOf(['diagonal', 'horizontal', 'vertical']),
     speed: PropTypes.number,
     borderColor: PropTypes.string,
     squareSize: PropTypes.number,

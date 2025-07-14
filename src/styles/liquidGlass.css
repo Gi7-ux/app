@@ -1,0 +1,216 @@
+/* Liquid Glass Theme Styles - Optimized for Performance */
+
+/* Global styles for liquid glass components with performance optimizations */
+.liquid-glass-wrapper {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    will-change: transform;
+    contain: layout style paint;
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+.liquid-glass-wrapper:hover {
+    transform: translateY(-2px) translateZ(0);
+}
+
+/* Button variants with GPU acceleration */
+.liquid-glass-button {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.liquid-glass-button:hover {
+    transform: translateY(-1px) translateZ(0);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.liquid-glass-button:active {
+    transform: translateY(0) translateZ(0);
+}
+
+.liquid-glass-button.primary .glass-button-content {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.liquid-glass-button.secondary .glass-button-content {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.liquid-glass-button.success .glass-button-content {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.liquid-glass-button.danger .glass-button-content {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.liquid-glass-button.warning .glass-button-content {
+    color: #1f2937;
+    font-weight: 600;
+    text-shadow: none;
+}
+
+/* Card styles */
+.liquid-glass-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.liquid-glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Navigation item styles */
+.liquid-glass-nav-item {
+    margin: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.liquid-glass-nav-item:hover {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+.liquid-glass-nav-item.active {
+    opacity: 1;
+    box-shadow: 0 4px 16px rgba(91, 154, 139, 0.4);
+}
+
+.glass-nav-content {
+    padding: 12px 16px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Modal styles */
+.liquid-glass-modal {
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.glass-modal-content {
+    padding: 32px;
+    min-width: 400px;
+}
+
+/* Input styles */
+.liquid-glass-input {
+    transition: all 0.3s ease;
+}
+
+.liquid-glass-input:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(91, 154, 139, 0.3);
+}
+
+.glass-input-field {
+    font-family: inherit;
+}
+
+.glass-input-field::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Enhanced hover effects for different variants */
+.liquid-glass-wrapper.primary:hover {
+    box-shadow: 0 16px 40px rgba(91, 154, 139, 0.4);
+}
+
+.liquid-glass-wrapper.secondary:hover {
+    box-shadow: 0 12px 30px rgba(75, 127, 114, 0.3);
+}
+
+.liquid-glass-wrapper.card:hover {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.liquid-glass-wrapper.button:hover {
+    box-shadow: 0 8px 25px rgba(91, 154, 139, 0.5);
+}
+
+.liquid-glass-wrapper.navigation:hover {
+    box-shadow: 0 6px 20px rgba(91, 154, 139, 0.3);
+}
+
+.liquid-glass-wrapper.modal {
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .glass-card-content {
+        padding: 16px;
+    }
+
+    .glass-modal-content {
+        padding: 24px;
+        min-width: 320px;
+    }
+
+    .liquid-glass-nav-item {
+        margin: 2px 4px;
+    }
+}
+
+/* Animation keyframes for enhanced effects */
+@keyframes glassShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.liquid-glass-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent);
+    background-size: 200% 100%;
+    animation: glassShimmer 3s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.liquid-glass-wrapper:hover::before {
+    opacity: 1;
+}
+
+/* Dark mode compatibility */
+@media (prefers-color-scheme: dark) {
+    .liquid-glass-wrapper {
+        --glass-overlay: rgba(255, 255, 255, 0.1);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .liquid-glass-wrapper {
+        --glass-overlay: rgba(0, 0, 0, 0.1);
+    }
+}
