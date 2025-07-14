@@ -4,6 +4,7 @@ import { LoginScreen } from './LoginScreen.jsx';
 import { ResetPasswordScreen } from './ResetPasswordScreen.jsx';
 import { RegisterScreen } from './RegisterScreen.jsx'; // Import RegisterScreen
 import Dashboard from './Dashboard.jsx';
+import DemoDashboard from './DemoDashboard.jsx';
 import { AuthService } from '../services/AuthService.js';
 
 // A wrapper for protected routes
@@ -46,6 +47,7 @@ export const App = () => {
 
     return (
         <Routes>
+            <Route path="/demo" element={<DemoDashboard />} />
             <Route
                 path="/login"
                 element={
