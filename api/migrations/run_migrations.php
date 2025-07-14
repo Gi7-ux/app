@@ -17,8 +17,6 @@ function run_critical_migrations() {
     }
     
     try {
-        $db->beginTransaction();
-        
         // Check if users table has the name column
         $check_query = "SHOW COLUMNS FROM `users` LIKE 'name'";
         $check_stmt = $db->prepare($check_query);
@@ -107,91 +105,166 @@ function run_critical_migrations() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
             $db->exec($create_tickets);
             file_put_contents(__DIR__ . '/../logs/debug.log', "Created tickets table\n", FILE_APPEND);
-        }
-
-        // Check if project_messages table exists (legacy table for project communication)
-        $project_messages_check = "SHOW TABLES LIKE 'project_messages'";
-        $project_messages_stmt = $db->prepare($project_messages_check);
-        $project_messages_stmt->execute();
-
-        if ($project_messages_stmt->rowCount() == 0) {
-            // Create project_messages table for backward compatibility
-            $create_project_messages = "CREATE TABLE IF NOT EXISTS `project_messages` (
-                `id` INT AUTO_INCREMENT PRIMARY KEY,
-                `project_id` INT NOT NULL,
-                `sender` VARCHAR(255) NOT NULL,
-                `text` TEXT NOT NULL,
-                `type` VARCHAR(50) DEFAULT 'project_communication',
-                `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-            $db->exec($create_project_messages);
-            file_put_contents(__DIR__ . '/../logs/debug.log', "Created project_messages table\n", FILE_APPEND);
-        }
-
-        // Check if the project_messages table has the type column
-        $project_messages_type_check = "SHOW COLUMNS FROM `project_messages` LIKE 'type'";
-        $project_messages_type_stmt = $db->prepare($project_messages_type_check);
-        $project_messages_type_stmt->execute();
-
-        if ($project_messages_type_stmt->rowCount() == 0) {
-            // Add type column to project_messages table
-            $add_type_column = "ALTER TABLE `project_messages` ADD COLUMN `type` VARCHAR(50) DEFAULT 'project_communication'";
-            $db->exec($add_type_column);
-            file_put_contents(__DIR__ . '/../logs/debug.log', "Added type column to project_messages table\n", FILE_APPEND);
-        }
-
-        // Check if notifications table exists
-        $notifications_check = "SHOW TABLES LIKE 'notifications'";
-        $notifications_stmt = $db->prepare($notifications_check);
-        $notifications_stmt->execute();
-
-        if ($notifications_stmt->rowCount() == 0) {
-            // Create notifications table
-            $create_notifications = "CREATE TABLE IF NOT EXISTS `notifications` (
-                `id` INT AUTO_INCREMENT PRIMARY KEY,
-                `user_id` INT NOT NULL,
-                `title` VARCHAR(255) DEFAULT NULL,
-                `message` TEXT NOT NULL,
-                `type` VARCHAR(50) DEFAULT 'general',
-                `link` VARCHAR(255) DEFAULT NULL,
-                `is_read` BOOLEAN DEFAULT FALSE,
-                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-            $db->exec($create_notifications);
-            file_put_contents(__DIR__ . '/../logs/debug.log', "Created notifications table\n", FILE_APPEND);
-        }
-
-        // Check if notifications table has title column
-        $notifications_title_check = "SHOW COLUMNS FROM `notifications` LIKE 'title'";
-        $notifications_title_stmt = $db->prepare($notifications_title_check);
-        $notifications_title_stmt->execute();
-
-        if ($notifications_title_stmt->rowCount() == 0) {
-            // Add title column to notifications table
-            $add_title_column = "ALTER TABLE `notifications` ADD COLUMN `title` VARCHAR(255) DEFAULT NULL AFTER `user_id`";
-            $db->exec($add_title_column);
-            file_put_contents(__DIR__ . '/../logs/debug.log', "Added title column to notifications table\n", FILE_APPEND);
-        }
-
-        // Check if notifications table has type column
-        $notifications_type_check = "SHOW COLUMNS FROM `notifications` LIKE 'type'";
-        $notifications_type_stmt = $db->prepare($notifications_type_check);
-        $notifications_type_stmt->execute();
-
-        if ($notifications_type_stmt->rowCount() == 0) {
-            // Add type column to notifications table
-            $add_type_column_notifications = "ALTER TABLE `notifications` ADD COLUMN `type` VARCHAR(50) DEFAULT 'general' AFTER `message`";
-            $db->exec($add_type_column_notifications);
-            file_put_contents(__DIR__ . '/../logs/debug.log', "Added type column to notifications table\n", FILE_APPEND);
-        }
-
-        $db->commit();
+        }        
         return true;
     } catch (PDOException $e) {
         file_put_contents(__DIR__ . '/../logs/debug.log', "Migration error: " . $e->getMessage() . "\n", FILE_APPEND);
         return false;
+    }
+}
+
+function fix_messaging_tables($db) {
+    file_put_contents(__DIR__ . '/../logs/debug.log', "Fixing messaging tables structure: " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+    
+    try {
+        // Check if message_threads table has 'type' column
+        $type_check = "SHOW COLUMNS FROM `message_threads` LIKE 'type'";
+        $type_stmt = $db->prepare($type_check);
+        $type_stmt->execute();
+        
+        if ($type_stmt->rowCount() == 0) {
+            // Add 'type' column to message_threads
+            $add_type = "ALTER TABLE `message_threads` ADD COLUMN `type` VARCHAR(50) NOT NULL DEFAULT 'direct_message' COMMENT 'e.g., project_communication, client_admin, admin_broadcast, direct_message'";
+            $db->exec($add_type);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added 'type' column to message_threads table\n", FILE_APPEND);
+        }
+        
+        // Check if messages table has 'text' column (it has 'content' instead)
+        $text_check = "SHOW COLUMNS FROM `messages` LIKE 'text'";
+        $text_stmt = $db->prepare($text_check);
+        $text_stmt->execute();
+        
+        if ($text_stmt->rowCount() == 0) {
+            // Check if 'content' column exists first
+            $content_check = "SHOW COLUMNS FROM `messages` LIKE 'content'";
+            $content_stmt = $db->prepare($content_check);
+            $content_stmt->execute();
+            
+            if ($content_stmt->rowCount() > 0) {
+                // Rename 'content' column to 'text'
+                $rename_content = "ALTER TABLE `messages` CHANGE COLUMN `content` `text` TEXT";
+                $db->exec($rename_content);
+                file_put_contents(__DIR__ . '/../logs/debug.log', "Renamed 'content' column to 'text' in messages table\n", FILE_APPEND);
+            } else {
+                // Add 'text' column if neither exists
+                $add_text = "ALTER TABLE `messages` ADD COLUMN `text` TEXT DEFAULT NULL";
+                $db->exec($add_text);
+                file_put_contents(__DIR__ . '/../logs/debug.log', "Added 'text' column to messages table\n", FILE_APPEND);
+            }
+        }
+        
+        // Check if messages table has 'file_id' column
+        $file_id_check = "SHOW COLUMNS FROM `messages` LIKE 'file_id'";
+        $file_id_stmt = $db->prepare($file_id_check);
+        $file_id_stmt->execute();
+        
+        if ($file_id_stmt->rowCount() == 0) {
+            $add_file_id = "ALTER TABLE `messages` ADD COLUMN `file_id` INT DEFAULT NULL COMMENT 'Reference to an uploaded file, if the message is a file share'";
+            $db->exec($add_file_id);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added 'file_id' column to messages table\n", FILE_APPEND);
+        }
+        
+        // Check if message_thread_participants table has 'last_read_timestamp' column
+        $last_read_check = "SHOW COLUMNS FROM `message_thread_participants` LIKE 'last_read_timestamp'";
+        $last_read_stmt = $db->prepare($last_read_check);
+        $last_read_stmt->execute();
+        
+        if ($last_read_stmt->rowCount() == 0) {
+            $add_last_read = "ALTER TABLE `message_thread_participants` ADD COLUMN `last_read_timestamp` TIMESTAMP NULL DEFAULT NULL COMMENT 'To track when a user last read messages in this thread'";
+            $db->exec($add_last_read);
+            file_put_contents(__DIR__ . '/../logs/debug.log', "Added 'last_read_timestamp' column to message_thread_participants table\n", FILE_APPEND);
+        }
+        
+        // Ensure message_threads table has all required columns from schema
+        $columns_to_add = [
+            'subject' => "ALTER TABLE `message_threads` ADD COLUMN `subject` VARCHAR(255) DEFAULT NULL COMMENT 'Optional subject for the thread, useful for broadcasts or specific discussions'",
+            'updated_at' => "ALTER TABLE `message_threads` ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+        ];
+        
+        foreach ($columns_to_add as $column => $query) {
+            $check_query = "SHOW COLUMNS FROM `message_threads` LIKE '$column'";
+            $check_stmt = $db->prepare($check_query);
+            $check_stmt->execute();
+            
+            if ($check_stmt->rowCount() == 0) {
+                try {
+                    $db->exec($query);
+                    file_put_contents(__DIR__ . '/../logs/debug.log', "Added '$column' column to message_threads table\n", FILE_APPEND);
+                } catch (PDOException $e) {
+                    // Column might already exist, skip
+                    file_put_contents(__DIR__ . '/../logs/debug.log', "Column '$column' already exists or error: " . $e->getMessage() . "\n", FILE_APPEND);
+                }
+            }
+        }
+        
+        // Create messaging tables if they don't exist (fallback)
+        create_messaging_tables_if_missing($db);
+        
+    } catch (PDOException $e) {
+        file_put_contents(__DIR__ . '/../logs/debug.log', "Error fixing messaging tables: " . $e->getMessage() . "\n", FILE_APPEND);
+    }
+}
+
+function create_messaging_tables_if_missing($db) {
+    // Create message_threads table if missing
+    $threads_check = "SHOW TABLES LIKE 'message_threads'";
+    $threads_stmt = $db->prepare($threads_check);
+    $threads_stmt->execute();
+    
+    if ($threads_stmt->rowCount() == 0) {
+        $create_threads = "CREATE TABLE IF NOT EXISTS `message_threads` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `project_id` INT DEFAULT NULL,
+            `type` VARCHAR(50) NOT NULL COMMENT 'e.g., project_communication, client_admin, admin_broadcast, direct_message',
+            `subject` VARCHAR(255) DEFAULT NULL COMMENT 'Optional subject for the thread, useful for broadcasts or specific discussions',
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL
+        ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4";
+        $db->exec($create_threads);
+        file_put_contents(__DIR__ . '/../logs/debug.log', "Created message_threads table\n", FILE_APPEND);
+    }
+    
+    // Create message_thread_participants table if missing
+    $participants_check = "SHOW TABLES LIKE 'message_thread_participants'";
+    $participants_stmt = $db->prepare($participants_check);
+    $participants_stmt->execute();
+    
+    if ($participants_stmt->rowCount() == 0) {
+        $create_participants = "CREATE TABLE IF NOT EXISTS `message_thread_participants` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `thread_id` INT NOT NULL,
+            `user_id` INT NOT NULL,
+            `last_read_timestamp` TIMESTAMP NULL DEFAULT NULL COMMENT 'To track when a user last read messages in this thread',
+            `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE,
+            FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+            UNIQUE KEY `unique_participant` (`thread_id`, `user_id`)
+        ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4";
+        $db->exec($create_participants);
+        file_put_contents(__DIR__ . '/../logs/debug.log', "Created message_thread_participants table\n", FILE_APPEND);
+    }
+    
+    // Create messages table if missing
+    $messages_check = "SHOW TABLES LIKE 'messages'";
+    $messages_stmt = $db->prepare($messages_check);
+    $messages_stmt->execute();
+    
+    if ($messages_stmt->rowCount() == 0) {
+        $create_messages = "CREATE TABLE IF NOT EXISTS `messages` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `thread_id` INT NOT NULL,
+            `sender_id` INT NOT NULL,
+            `text` TEXT DEFAULT NULL,
+            `file_id` INT DEFAULT NULL COMMENT 'Reference to an uploaded file, if the message is a file share',
+            `status` VARCHAR(50) DEFAULT 'approved' COMMENT 'e.g., approved, pending, deleted',
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE,
+            FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+            FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE SET NULL
+        ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4";
+        $db->exec($create_messages);
+        file_put_contents(__DIR__ . '/../logs/debug.log', "Created messages table\n", FILE_APPEND);
     }
 }
 

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .info {
+            color: blue;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Messaging System Test</h1>
+
+    <div class="test-section">
+        <h3>1. Login Test</h3>
+        <input type="email" id="email" placeholder="Email" value="admin@architex.co.za">
+        <input type="password" id="password" placeholder="Password" value="PASSWORD">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Get Threads Test</h3>
+        <button onclick="testGetThreads()">Get User Threads</button>
+        <div id="threadsResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Create Thread Test</h3>
+        <select id="threadType">
+            <option value="project_communication">Project Communication</option>
+            <option value="client_admin">Client Admin</option>
+            <option value="direct_message">Direct Message</option>
+        </select>
+        <input type="number" id="projectId" placeholder="Project ID (for project threads)" value="1">
+        <button onclick="testCreateThread()">Create Thread</button>
+        <div id="createThreadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Send Message Test</h3>
+        <input type="number" id="threadId" placeholder="Thread ID">
+        <input type="text" id="messageText" placeholder="Message text" value="Test message from frontend">
+        <button onclick="testSendMessage()">Send Message</button>
+        <div id="sendMessageResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Get Messages Test</h3>
+        <input type="number" id="getThreadId" placeholder="Thread ID">
+        <button onclick="testGetMessages()">Get Messages</button>
+        <div id="getMessagesResult"></div>
+    </div>
+
+    <div id="results">
+        <h3>Test Results:</h3>
+    </div>
+
+    <script>
+        let accessToken = '';
+        let currentUser = null;
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const item = document.createElement('div');
+            item.className = `result-item ${type}`;
+            item.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(item);
+            console.log(message);
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+
+            try {
+                log('Testing login...', 'info');
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    accessToken = data.access_token;
+                    currentUser = data.user;
+                    resultDiv.innerHTML = `<span class="success">✅ Login successful! User: ${data.user.name} (${data.user.role})</span>`;
+                    log(`Login successful for ${data.user.name} (${data.user.role})`, 'success');
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Login failed: ${data.message}</span>`;
+                    log(`Login failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Login error: ${error.message}</span>`;
+                log(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetThreads() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const resultDiv = document.getElementById('threadsResult');
+
+            try {
+                log('Testing get threads...', 'info');
+                const response = await fetch('/api/messages/get_threads.php', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Got ${data.length} threads</span><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`Got ${data.length} threads successfully`, 'success');
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Get threads failed: ${data.message}</span>`;
+                    log(`Get threads failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Get threads error: ${error.message}</span>`;
+                log(`Get threads error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateThread() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const threadType = document.getElementById('threadType').value;
+            const projectId = document.getElementById('projectId').value;
+            const resultDiv = document.getElementById('createThreadResult');
+
+            const requestBody = { type: threadType };
+            if (projectId && (threadType === 'project_communication' || threadType === 'client_admin')) {
+                requestBody.project_id = parseInt(projectId);
+            }
+
+            try {
+                log(`Testing create thread (${threadType})...`, 'info');
+                const response = await fetch('/api/messages/ensure_thread.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Thread created/found: ID ${data.thread_id}</span><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`Thread created/found: ID ${data.thread_id}`, 'success');
+                    document.getElementById('threadId').value = data.thread_id;
+                    document.getElementById('getThreadId').value = data.thread_id;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Create thread failed: ${data.message}</span>`;
+                    log(`Create thread failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Create thread error: ${error.message}</span>`;
+                log(`Create thread error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSendMessage() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const threadId = document.getElementById('threadId').value;
+            const messageText = document.getElementById('messageText').value;
+            const resultDiv = document.getElementById('sendMessageResult');
+
+            if (!threadId || !messageText) {
+                alert('Please provide thread ID and message text');
+                return;
+            }
+
+            try {
+                log(`Testing send message to thread ${threadId}...`, 'info');
+                const response = await fetch('/api/messages/send_message.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        thread_id: parseInt(threadId),
+                        text: messageText
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Message sent: ID ${data.message_id}</span><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`Message sent successfully: ID ${data.message_id}`, 'success');
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Send message failed: ${data.message}</span>`;
+                    log(`Send message failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Send message error: ${error.message}</span>`;
+                log(`Send message error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetMessages() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const threadId = document.getElementById('getThreadId').value;
+            const resultDiv = document.getElementById('getMessagesResult');
+
+            if (!threadId) {
+                alert('Please provide thread ID');
+                return;
+            }
+
+            try {
+                log(`Testing get messages from thread ${threadId}...`, 'info');
+                const response = await fetch(`/api/messages/get_messages.php?thread_id=${threadId}`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Got ${data.length} messages</span><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    log(`Got ${data.length} messages successfully`, 'success');
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Get messages failed: ${data.message}</span>`;
+                    log(`Get messages failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Get messages error: ${error.message}</span>`;
+                log(`Get messages error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run login on page load for quick testing
+        window.onload = function () {
+            log('Messaging system test page loaded', 'info');
+        };
+    </script>
+</body>
+
+</html>

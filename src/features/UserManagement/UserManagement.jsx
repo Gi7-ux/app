@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ICONS } from '../../assets/icons.jsx';
 import { UserForm } from './components/UserForm.jsx';
 import { AuthService } from '../../services/AuthService.js';
+import { LiquidGlassCard, LiquidGlassButton, LiquidGlassInput } from '../../components/LiquidGlassComponents.jsx';
 
 const isOnline = (lastSeen) => {
-    if (!lastSeen) return false;
+    if (!lastSeen) {
+        return false;
+    }
     const lastSeenDate = new Date(lastSeen);
     const now = new Date();
     const diffMinutes = (now - lastSeenDate) / (1000 * 60);
@@ -113,22 +116,41 @@ export const UserManagement = () => {
     return (
         <>
             <div className="management-page">
-                <div className="management-header">
-                    <h1>User Management</h1>
-                    <button className="create-btn" onClick={handleOpenAddModal}>
-                        {ICONS.addUser}
-                        <span>Add User</span>
-                    </button>
-                </div>
-                <div className="management-controls">
-                    <input
+                <LiquidGlassCard style={{ marginBottom: '24px' }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0'
+                    }}>
+                        <h1 style={{
+                            margin: '0',
+                            color: 'white',
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}>User Management</h1>
+                        <LiquidGlassButton
+                            variant="primary"
+                            size="medium"
+                            onClick={handleOpenAddModal}
+                        >
+                            {ICONS.addUser}
+                            <span>Add User</span>
+                        </LiquidGlassButton>
+                    </div>
+                </LiquidGlassCard>
+
+                <LiquidGlassCard style={{ marginBottom: '24px' }}>
+                    <LiquidGlassInput
                         type="text"
                         placeholder="Search users by name, email, role, skill..."
-                        className="search-input"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '100%' }}
                     />
-                </div>
+                </LiquidGlassCard>
+
                 {error && <p style={{ color: 'red', padding: '1.5rem' }}>{error}</p>}
                 <div className="table-container">
                     <table className="data-table">

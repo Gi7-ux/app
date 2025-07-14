@@ -3,17 +3,54 @@ import PropTypes from 'prop-types';
 import { AuthService } from '../../services/AuthService.js';
 import { useNavigate } from 'react-router-dom';
 import { ICONS } from '../../assets/icons.jsx';
+import { LiquidGlassCard } from '../../components/LiquidGlassComponents.jsx';
 
 const StatCard = ({ stat }) => (
-    <div className="stat-card" data-color={stat.color}>
-        <div className="stat-icon">
-            {ICONS[stat.icon]}
+    <LiquidGlassCard
+        className="stat-card"
+        style={{
+            padding: '0',
+            minHeight: '120px',
+        }}
+    >
+        <div style={{
+            padding: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            height: '100%'
+        }}>
+            <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: `var(--card-${stat.color}-bg, rgba(255, 255, 255, 0.2))`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                color: 'white',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+            }}>
+                {ICONS[stat.icon]}
+            </div>
+            <div style={{ flex: 1 }}>
+                <p style={{
+                    margin: '0 0 8px 0',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                }}>{stat.label}</p>
+                <span style={{
+                    color: 'white',
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>{stat.value}</span>
+            </div>
         </div>
-        <div className="stat-content">
-            <p className="stat-label">{stat.label}</p>
-            <span className="stat-value">{stat.value}</span>
-        </div>
-    </div>
+    </LiquidGlassCard>
 );
 
 StatCard.propTypes = {

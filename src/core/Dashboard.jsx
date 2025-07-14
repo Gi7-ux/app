@@ -7,6 +7,8 @@ import { CLIENT_NAV_ITEMS } from '../config/clientNavigation.jsx';
 import { FREELANCER_NAV_ITEMS } from '../config/freelancerNavigation.jsx';
 import { NotificationBell } from '../components/NotificationBell.jsx';
 import { ThemedSquaresBackground } from '../components/ThemedSquaresBackground.jsx';
+import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper.jsx';
+import { LiquidGlassNavItem, LiquidGlassButton } from '../components/LiquidGlassComponents.jsx';
 
 const getNavItems = (role) => {
     switch (role) {
@@ -19,25 +21,88 @@ const getNavItems = (role) => {
 
 const Sidebar = ({ user, navItems, currentPage, setCurrentPage }) => (
     <nav className="sidebar">
-        <div className="sidebar-header">
-            <BirdIcon style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }} />
-            <span>Architex Axis</span>
-        </div>
-        <div className="sidebar-profile">
-            <div className="avatar">
-                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+        <LiquidGlassWrapper
+            variant="navigation"
+            size="medium"
+            style={{
+                margin: '16px',
+                marginBottom: '24px'
+            }}
+        >
+            <div className="sidebar-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: 'white',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+                <BirdIcon style={{ fontSize: '1.5rem', color: 'white', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }} />
+                <span style={{ fontWeight: '600', fontSize: '16px' }}>Architex Axis</span>
             </div>
-            <div className="profile-info">
-                <h3>{user.name}</h3>
-                <p>{user.role}</p>
+        </LiquidGlassWrapper>
+
+        <LiquidGlassWrapper
+            variant="card"
+            size="custom"
+            style={{
+                margin: '16px',
+                marginBottom: '24px'
+            }}
+        >
+            <div className="sidebar-profile" style={{
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                textAlign: 'center'
+            }}>
+                <div className="avatar" style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    color: 'white',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    border: '2px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="profile-info">
+                    <h3 style={{
+                        margin: '0 0 4px 0',
+                        color: 'white',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        fontSize: '16px',
+                        fontWeight: '600'
+                    }}>{user.name}</h3>
+                    <p style={{
+                        margin: '0',
+                        color: 'rgba(255,255,255,0.8)',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        fontSize: '14px',
+                        textTransform: 'capitalize'
+                    }}>{user.role}</p>
+                </div>
             </div>
-        </div>
-        <div className="nav-menu">
+        </LiquidGlassWrapper>
+
+        <div className="nav-menu" style={{ padding: '0 8px' }}>
             {navItems.map(item => (
-                <div key={item.id} className={`nav-item ${currentPage === item.id ? 'active' : ''}`} onClick={() => setCurrentPage(item.id)}>
+                <LiquidGlassNavItem
+                    key={item.id}
+                    active={currentPage === item.id}
+                    onClick={() => setCurrentPage(item.id)}
+                    style={{ marginBottom: '8px' }}
+                >
                     {ICONS[item.icon]}
                     <span>{item.label}</span>
-                </div>
+                </LiquidGlassNavItem>
             ))}
         </div>
     </nav>
@@ -53,13 +118,25 @@ Sidebar.propTypes = {
 const Header = ({ onLogout }) => (
     <header className="top-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="header-button active">{ICONS.overview}<span>Dashboard</span></button>
-            <button className="header-button">{ICONS.profile}<span>My Profile</span></button>
-            <button className="header-button">{ICONS.messages}<span>Messages</span></button>
+            <LiquidGlassButton variant="primary" size="medium">
+                {ICONS.overview}<span>Dashboard</span>
+            </LiquidGlassButton>
+            <LiquidGlassButton variant="secondary" size="medium">
+                {ICONS.profile}<span>My Profile</span>
+            </LiquidGlassButton>
+            <LiquidGlassButton variant="secondary" size="medium">
+                {ICONS.messages}<span>Messages</span>
+            </LiquidGlassButton>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <NotificationBell />
-            <button className="header-button logout-button" onClick={onLogout}>{ICONS.logout}<span>Logout</span></button>
+            <LiquidGlassButton
+                variant="danger"
+                size="medium"
+                onClick={onLogout}
+            >
+                {ICONS.logout}<span>Logout</span>
+            </LiquidGlassButton>
         </div>
     </header>
 );

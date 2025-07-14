@@ -2,9 +2,8 @@
  * **IMPORTANT** Never break the original structure, only add highly customized new styles
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
 
 @layer base {
   :root {
@@ -79,29 +78,62 @@
 }
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
-
 .dashboard-card {
-  @apply bg-card text-card-foreground rounded-md border p-5 transition-all hover:shadow-md;
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
-
 .card-header {
-  @apply flex items-center justify-between mb-4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-
 .card-title {
-  @apply text-lg font-medium;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
 }
-
 .status-indicator {
-  @apply h-2 w-2 rounded-full;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+}
+.status-success {
+  background-color: #22c55e;
+}
+.status-warning {
+  background-color: #f59e0b;
+}
+.status-danger {
+  background-color: hsl(var(--destructive));
+}
+.status-neutral {
+  background-color: hsl(var(--muted-foreground));
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.sidebar-link.active {
+  background-color: hsl(var(--sidebar-accent));
+  color: hsl(var(--primary));
 }
 
+.sidebar-link:hover {
+  background-color: hsl(var(--sidebar-accent));
+}
 .status-success {
   @apply bg-green-500;
 }
