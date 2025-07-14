@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { usePolling } from './usePolling.js';
 import { useNavigate } from 'react-router-dom';
 import { ICONS } from '../assets/icons.jsx';
 import { LiquidGlassWrapper } from './LiquidGlassWrapper.jsx';
@@ -13,9 +14,9 @@ export const NotificationBell = () => {
     const fetchNotifications = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            if (!token) { 
-                console.warn("No token found, skipping notification fetch."); 
-                return; 
+            if (!token) {
+                console.warn("No token found, skipping notification fetch.");
+                return;
             }
 
             const response = await fetch('/api/notifications/get.php', {
@@ -37,11 +38,13 @@ export const NotificationBell = () => {
         }
     };
 
+    // Initial fetch on mount
     useEffect(() => {
-        fetchNotifications(); // Initial fetch
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
-        return () => clearInterval(interval);
+        fetchNotifications();
     }, []);
+
+    // Poll for notifications every 30 seconds using custom hook
+    usePolling(fetchNotifications, 30000, true);
 
     // Close dropdown if clicked outside
     useEffect(() => {
@@ -103,6 +106,7 @@ export const NotificationBell = () => {
             <LiquidGlassButton
                 variant="secondary"
                 size="medium"
+                aria-label={`Notifications (${unreadCount} unread)`}
                 onClick={() => setIsOpen(prev => !prev)}
                 style={{ position: 'relative' }}
             >
@@ -180,11 +184,10 @@ export const NotificationBell = () => {
                                             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                                             cursor: 'pointer',
                                             background: n.is_read ? 'transparent' : 'rgba(91, 154, 139, 0.2)',
-                                            transition: 'background 0.2s ease',
-                                            '&:hover': {
-                                                background: 'rgba(255, 255, 255, 0.1)'
-                                            }
+                                            transition: 'background 0.2s ease'
                                         }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = n.is_read ? 'transparent' : 'rgba(91, 154, 139, 0.2)'}
                                     >
                                         <p style={{
                                             margin: '0 0 4px 0',

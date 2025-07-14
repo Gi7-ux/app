@@ -10,7 +10,7 @@
     position: relative;
     overflow: hidden;
     /* Add a subtle vignette for depth */
-    box-shadow: 0 0 0 100vw rgba(0,0,0,0.12) inset;
+    box-shadow: 0 0 0 100vw rgba(0, 0, 0, 0.12) inset;
 }
 
 .login-card {
@@ -34,7 +34,7 @@
     height: 3rem;
     color: white;
     margin-bottom: 1.5rem;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .login-title {
@@ -43,23 +43,23 @@
     color: white;
     margin: 0 0 0.5rem 0;
     letter-spacing: -0.025em;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .login-subtitle {
     font-size: 1.125rem;
     font-weight: 500;
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
     margin: 0 0 0.75rem 0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .login-description {
     font-size: 0.875rem;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
     margin: 0;
     line-height: 1.5;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .login-form {
@@ -79,7 +79,7 @@
     font-weight: 500;
     color: white;
     margin-bottom: 0.5rem;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     display: block;
 }
 
@@ -116,7 +116,7 @@
     font-size: 0.875rem;
     text-align: left;
     backdrop-filter: blur(10px);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .login-button {
@@ -153,9 +153,9 @@
 
 .signup-link {
     font-size: 0.875rem;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
     margin: 1rem 0 0 0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     text-align: center;
 }
 

@@ -12,7 +12,6 @@ export const LiquidGlassButton = ({
     disabled = false,
     className = '',
     onClick,
-    type = 'button',
     ...props
 }) => {
     const handleClick = (e) => {
@@ -40,29 +39,36 @@ export const LiquidGlassButton = ({
                 opacity: disabled ? 0.6 : 1,
                 pointerEvents: disabled ? 'none' : 'auto',
                 transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '12px 24px',
+            }}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
+            onKeyDown={(e) => {
+                if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handleClick(e);
+                }
             }}
             {...props}
         >
-            <button
-                type={type}
-                className="glass-button-content"
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'white',
-                    fontSize: 'inherit',
-                    fontWeight: '500',
-                    cursor: 'inherit',
-                    padding: '0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                }}
-                disabled={disabled}
-            >
+            <span style={{
+                color: 'white',
+                fontSize: 'inherit',
+                fontWeight: '500',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                fontFamily: 'inherit',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+            }}>
                 {children}
-            </button>
+            </span>
         </LiquidGlassWrapper>
     );
 };
@@ -74,7 +80,6 @@ LiquidGlassButton.propTypes = {
     disabled: PropTypes.bool,
     className: PropTypes.string,
     onClick: PropTypes.func,
-    type: PropTypes.oneOf(['button', 'submit', 'reset']),
 };
 
 /**
@@ -232,7 +237,6 @@ export const LiquidGlassInput = ({
             width: '100%',
             ...style
         }}
-        {...props}
     >
         <input
             type={type}
@@ -247,10 +251,7 @@ export const LiquidGlassInput = ({
                 color: 'white',
                 fontSize: '14px',
                 width: '100%',
-                padding: '0',
-                '::placeholder': {
-                    color: 'rgba(255, 255, 255, 0.7)',
-                }
+                padding: '0'
             }}
             {...props}
         />

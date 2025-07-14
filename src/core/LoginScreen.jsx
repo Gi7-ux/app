@@ -171,7 +171,7 @@ export const LoginScreen = ({ onLogin }) => {
                             </p>
 
                             {showForgotPassword ? (
-                                <ForgotPasswordForm 
+                                <ForgotPasswordForm
                                     onCancel={() => setShowForgotPassword(false)}
                                     onSubmitted={() => setShowForgotPassword(false)}
                                 />
@@ -183,7 +183,7 @@ export const LoginScreen = ({ onLogin }) => {
                                     margin: '0',
                                     fontSize: '0.875rem'
                                 }}>
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowForgotPassword(true)}
                                         style={{

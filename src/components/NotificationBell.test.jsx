@@ -1,19 +1,24 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../test/utils/test-utils';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act } from 'react';
 import { NotificationBell } from './NotificationBell';
 
+// Mock usePolling to prevent real intervals in tests
+jest.mock('./usePolling.js', () => ({
+    usePolling: () => { }
+}));
+
 // Mock the icons
-vi.mock('../assets/icons.jsx', () => ({
+jest.mock('../assets/icons.jsx', () => ({
     ICONS: {
         notifications: '🔔'
     }
 }));
 
 // Mock react-router-dom
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual('react-router-dom');
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => {
+    const actual = jest.requireActual('react-router-dom');
     return {
         ...actual,
         useNavigate: () => mockNavigate
@@ -50,7 +55,7 @@ describe('NotificationBell', () => {
         localStorage.setItem('access_token', 'mock-token');
 
         // Mock fetch for notifications
-        global.fetch = vi.fn().mockImplementation((url) => {
+        global.fetch = jest.fn().mockImplementation((url) => {
             if (url.includes('/api/notifications/get.php')) {
                 return Promise.resolve({
                     ok: true,
@@ -73,35 +78,32 @@ describe('NotificationBell', () => {
         });
 
         // Mock setInterval/clearInterval
-        vi.useFakeTimers();
+        jest.useFakeTimers();
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
-        vi.clearAllTimers();
-        vi.useRealTimers();
+        jest.clearAllMocks();
+        jest.clearAllTimers();
+        jest.useRealTimers();
         localStorage.clear();
     });
 
     it('renders notification bell with correct unread count', async () => {
         render(<NotificationBell />);
-        // Check initial render before async data; unreadCount is 0 initially.
-        // The button's aria-label depends on unreadCount.
-        expect(screen.getByRole('button', { name: 'Notifications (0 unread)'})).toBeInTheDocument();
-
-
-        await waitFor(() => {
-            // After fetch and state update, the label should change.
-            expect(screen.getByRole('button', { name: 'Notifications (2 unread)'})).toBeInTheDocument();
+        await act(async () => {
+            jest.runAllTimers();
         });
-
-        // The badge text '2' should also be present.
-        expect(screen.getByText('2')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'Notifications (2 unread)' })).toBeInTheDocument();
+            expect(screen.getByText('2')).toBeInTheDocument();
+        });
     });
 
     it('fetches notifications on mount', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith('/api/notifications/get.php', {
                 headers: { 'Authorization': 'Bearer mock-token' }
@@ -111,41 +113,57 @@ describe('NotificationBell', () => {
 
     it('polls for notifications every 30 seconds', async () => {
         render(<NotificationBell />);
-
         // Initial fetch
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledTimes(1);
         });
-
-        // Advance timer by 30 seconds
-        vi.advanceTimersByTime(30000);
-
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+        // Advance time by 30 seconds and check polling
+        await act(async () => {
+            jest.advanceTimersByTime(30000);
         });
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+        // Advance time by another 30 seconds and check polling again
+        await act(async () => {
+            jest.advanceTimersByTime(30000);
+        });
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
     });
 
     it('shows notification dropdown when bell is clicked', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
-        expect(screen.getByText('Notifications')).toBeInTheDocument();
-        expect(screen.getByText('New project assigned')).toBeInTheDocument();
-        expect(screen.getByText('Task completed')).toBeInTheDocument();
-        expect(screen.getByText('Payment received')).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Notifications')).toBeInTheDocument();
+            expect(screen.getByText('New project assigned')).toBeInTheDocument();
+            expect(screen.getByText('Task completed')).toBeInTheDocument();
+            expect(screen.getByText('Payment received')).toBeInTheDocument();
+        });
     });
 
     it('marks notification as read when clicked', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
-        const notification = screen.getByText('New project assigned');
-        fireEvent.click(notification);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
+        await waitFor(() => {
+            const notification = screen.getByText('New project assigned');
+            act(() => {
+                fireEvent.click(notification);
+            });
+        });
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith('/api/notifications/mark_read.php', {
                 method: 'POST',
@@ -155,20 +173,26 @@ describe('NotificationBell', () => {
                 },
                 body: JSON.stringify({ notification_id: 1 })
             });
+            expect(mockNavigate).toHaveBeenCalledWith('/projects/1');
         });
-
-        expect(mockNavigate).toHaveBeenCalledWith('/projects/1');
     });
 
     it('handles notifications without links', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
         const notification = screen.getByText('Payment received');
-        fireEvent.click(notification);
-
+        await act(async () => {
+            fireEvent.click(notification);
+        });
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith('/api/notifications/mark_read.php', {
                 method: 'POST',
@@ -179,20 +203,25 @@ describe('NotificationBell', () => {
                 body: JSON.stringify({ notification_id: 3 })
             });
         });
-
-        // Should not navigate if no link
         expect(mockNavigate).not.toHaveBeenCalled();
     });
 
     it('marks all notifications as read', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            vi.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
         const markAllButton = screen.getByText('Mark all as read');
-        fireEvent.click(markAllButton);
-
+        await act(async () => {
+            fireEvent.click(markAllButton);
+        });
+        await act(async () => {
+            vi.runAllTimers();
+        });
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith('/api/notifications/mark_read.php', {
                 method: 'POST',
@@ -206,17 +235,22 @@ describe('NotificationBell', () => {
     });
 
     it('shows no notifications message when list is empty', async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        global.fetch = jest.fn().mockResolvedValue({
             ok: true,
             status: 200,
             json: () => Promise.resolve([])
         });
-
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
+        await act(async () => {
+            vi.runAllTimers();
+        });
         expect(screen.getByText('No new notifications.')).toBeInTheDocument();
     });
 
@@ -225,47 +259,50 @@ describe('NotificationBell', () => {
             ok: false,
             status: 401
         });
-
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-
+        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(consoleSpy).toHaveBeenCalledWith(
                 'Unauthorized fetching notifications. User might be logged out.'
             );
         });
-
         consoleSpy.mockRestore();
     });
 
     it('handles missing token gracefully', async () => {
         localStorage.removeItem('access_token');
-
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-
+        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(consoleSpy).toHaveBeenCalledWith(
                 'No token found, skipping notification fetch.'
             );
         });
-
         consoleSpy.mockRestore();
     });
 
     it('closes dropdown when clicking outside', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
         expect(screen.getByText('Notifications')).toBeInTheDocument();
-
-        // Click outside
-        fireEvent.mouseDown(document.body);
-
+        await act(async () => {
+            fireEvent.mouseDown(document.body);
+        });
+        await act(async () => {
+            jest.runAllTimers();
+        });
         await waitFor(() => {
             expect(screen.queryByText('New project assigned')).not.toBeInTheDocument();
         });
@@ -273,13 +310,20 @@ describe('NotificationBell', () => {
 
     it('handles keyboard navigation for notifications', async () => {
         render(<NotificationBell />);
-
+        await act(async () => {
+            jest.runAllTimers();
+        });
         const bellButton = await screen.findByLabelText(/Notifications/);
-        fireEvent.click(bellButton);
-
+        await act(async () => {
+            fireEvent.click(bellButton);
+        });
         const notification = screen.getByText('New project assigned');
-        fireEvent.keyPress(notification, { key: 'Enter' });
-
+        await act(async () => {
+            fireEvent.keyPress(notification, { key: 'Enter' });
+        });
+        await act(async () => {
+            vi.runAllTimers();
+        });
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/projects/1');
         });

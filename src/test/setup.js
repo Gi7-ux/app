@@ -1,10 +1,18 @@
-import { expect, afterEach, beforeEach, vi } from 'vitest';
+// This file is now unused. Jest setup is handled in jest.setup.js
+
+
+import React from 'react';
+import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
 import { mockLocalStorage } from './utils/test-utils.jsx';
 
-// extends Vitest's expect method with methods from react-testing-library
-expect.extend(matchers);
+// Mock OptimizedSquaresBackground to avoid canvas errors in JSDOM
+jest.mock('../components/OptimizedSquaresBackground.jsx', () => ({
+  OptimizedSquaresBackground: () => React.createElement('div', { 'data-testid': 'mock-optimized-squares-background' })
+}));
+
+// extends Jest's expect method with methods from jest-dom
+// (already handled by @testing-library/jest-dom import)
 
 // Mock localStorage globally
 Object.defineProperty(window, 'localStorage', {
@@ -13,11 +21,11 @@ Object.defineProperty(window, 'localStorage', {
 
 // Mock window.alert and window.confirm
 Object.defineProperty(window, 'alert', {
-  value: vi.fn()
+  value: jest.fn()
 });
 
 Object.defineProperty(window, 'confirm', {
-  value: vi.fn(() => true)
+  value: jest.fn(() => true)
 });
 
 // Mock window.location
@@ -35,6 +43,6 @@ Object.defineProperty(window, 'location', {
 // runs a cleanup after each test case (e.g. clearing jsdom)
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   mockLocalStorage.clear();
 });
