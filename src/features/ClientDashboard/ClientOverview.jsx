@@ -35,16 +35,39 @@ export const ClientOverview = ({ setCurrentPage }) => {
     const [stats, setStats] = useState([]);
     const [error, setError] = useState('');
     const [recentCommunications, setRecentCommunications] = useState([]);
-    const [projectSpending, setProjectSpending] = useState(null); // Example: { total: 5000, recent: 1200 }
+    const [projectSpending, setProjectSpending] = useState(null); // Example: { total_spent: 5000, last_invoice: 1200 }
     const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+    const [recentFileUploads, setRecentFileUploads] = useState([]);
     const navigate = useNavigate();
 
     const fetchData = async () => {
         setError('');
         const token = AuthService.getAccessToken();
-        if (!token || !AuthService.isAuthenticated()) {
+        const userId = AuthService.getUserId();
+        if (!token || !AuthService.isAuthenticated() || !userId) {
             navigate('/login');
             return;
+        }
+        // Fetch recent file uploads for client
+        try {
+            const filesResponse = await fetch('/api/files/recent.php?limit=5', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const filesData = await filesResponse.json();
+            if (filesResponse.ok && Array.isArray(filesData)) {
+                setRecentFileUploads(filesData.map(f => ({
+                    id: f.id,
+                    filename: f.filename,
+                    type: f.mime_type && f.mime_type.includes('pdf') ? 'pdf' : (f.mime_type && f.mime_type.includes('image') ? 'image' : (f.mime_type && f.mime_type.includes('dwg') ? 'dwg' : 'file')),
+                    uploaded_by: f.uploaded_by,
+                    project: f.project,
+                    date: f.created_at ? new Date(f.created_at).toLocaleDateString() : ''
+                })));
+            } else {
+                setRecentFileUploads([]);
+            }
+        } catch {
+            setRecentFileUploads([]);
         }
 
         try {
@@ -71,20 +94,19 @@ export const ClientOverview = ({ setCurrentPage }) => {
             // Fetch recent communications (e.g., last 5 messages related to client's projects)
             // This is a placeholder, actual endpoint might be /api/messages/get_threads.php?user_id=X&limit=5
             // Or /api/activity/get.php?user_id=X&type=communication&limit=5
-            const commsResponse = await fetch(`/api/activity/get.php?user_id=${AuthService.getUserId()}&limit=3&type=communication`, { // Assuming API supports this
-                 headers: { 'Authorization': `Bearer ${token}` }
+            const commsResponse = await fetch(`/api/activity/get.php?user_id=${userId}&limit=3&type=communication`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (commsResponse.ok) {
                 const commsData = await commsResponse.json();
-                setRecentCommunications(commsData.length > 0 ? commsData : [{ action: "No recent communications.", created_at: new Date().toISOString(), user_name:"System" }]);
+                setRecentCommunications(commsData.length > 0 ? commsData : [{ action: "No recent communications.", created_at: new Date().toISOString(), user_name: "System" }]);
             } else {
-                 setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name:"Error" }]);
+                setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name: "Error" }]);
             }
-
 
             // Fetch upcoming project deadlines & milestones
             // Placeholder: /api/projects/deadlines?client_id=X
-             const deadlinesResponse = await fetch(`/api/projects/read.php?client_id=${AuthService.getUserId()}&status=In Progress&limit=3`, { // Mocking with existing endpoint + params
+            const deadlinesResponse = await fetch(`/api/projects/read.php?client_id=${userId}&status=In Progress&limit=3`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (deadlinesResponse.ok) {
@@ -94,12 +116,11 @@ export const ClientOverview = ({ setCurrentPage }) => {
                     title: p.title,
                     due_date: p.due_date || "Not set", // Assuming project object has due_date
                     milestone: p.current_milestone || "N/A" // Assuming project object has milestone info
-                })).slice(0,3); // Take first 3 for summary
-                setUpcomingDeadlines(formattedDeadlines.length > 0 ? formattedDeadlines : [{id:0, title:"No upcoming deadlines for active projects.", due_date:"", milestone:""}]);
+                })).slice(0, 3); // Take first 3 for summary
+                setUpcomingDeadlines(formattedDeadlines.length > 0 ? formattedDeadlines : [{ id: 0, title: "No upcoming deadlines for active projects.", due_date: "", milestone: "" }]);
             } else {
-                setUpcomingDeadlines([{id:0, title:"Could not load deadlines.", due_date:"", milestone:""}]);
+                setUpcomingDeadlines([{ id: 0, title: "Could not load deadlines.", due_date: "", milestone: "" }]);
             }
-
 
         } catch (err) {
             setError('An error occurred while fetching dashboard data: ' + err.message);
@@ -109,7 +130,6 @@ export const ClientOverview = ({ setCurrentPage }) => {
 
     useEffect(() => {
         fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -133,23 +153,23 @@ export const ClientOverview = ({ setCurrentPage }) => {
                 <div className="card">
                     <h3 className="card-header">Project Spending & Payments</h3>
                     {projectSpending ? (
-                        <div style={{padding: '1rem'}}>
-                            <p>Total Spent: {projectSpending.total_spent}</p>
-                            <p>Last Invoice Amount: {projectSpending.last_invoice}</p>
+                        <div style={{ padding: '1rem' }}>
+                            <p>Total Spent: R {projectSpending.total_spent !== undefined ? parseFloat(projectSpending.total_spent).toLocaleString() : 'N/A'}</p>
+                            <p>Last Invoice Amount: R {projectSpending.last_invoice !== undefined ? parseFloat(projectSpending.last_invoice).toLocaleString() : 'N/A'}</p>
                             {/* Link to full billing page */}
-                            <button className="action-link" style={{marginTop: '0.5rem'}} onClick={() => setCurrentPage('billing')}>View Payment History</button>
+                            <button className="action-link" style={{ marginTop: '0.5rem' }} onClick={() => setCurrentPage('billing')}>View Payment History</button>
                         </div>
-                    ) : <p style={{padding: '1rem'}}>Loading spending data...</p>}
+                    ) : <p style={{ padding: '1rem' }}>Loading spending data...</p>}
                 </div>
 
                 <div className="card">
                     <h3 className="card-header">Recent Communications</h3>
-                     <ul className="activity-list" style={{maxHeight: '200px', overflowY: 'auto', padding: '0 1rem 1rem 1rem'}}>
+                    <ul className="activity-list" style={{ maxHeight: '200px', overflowY: 'auto', padding: '0 1rem 1rem 1rem' }}>
                         {recentCommunications.map((item, i) => (
-                            <li key={i} className="activity-item" style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
+                            <li key={i} className="activity-item" style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
                                 <div className="activity-content">
-                                    <p style={{margin:0}}>{item.action} {(item.user_name && item.user_name !== "System" && item.user_name !== "Error") ? `(with ${item.user_name})` : ''}</p>
-                                    <span className="time" style={{fontSize: '0.8em'}}>{new Date(item.created_at).toLocaleString()}</span>
+                                    <p style={{ margin: 0 }}>{item.action} {(item.user_name && item.user_name !== "System" && item.user_name !== "Error") ? `(with ${item.user_name})` : ''}</p>
+                                    <span className="time" style={{ fontSize: '0.8em' }}>{new Date(item.created_at).toLocaleString()}</span>
                                 </div>
                             </li>
                         ))}
@@ -160,18 +180,40 @@ export const ClientOverview = ({ setCurrentPage }) => {
             <div className="card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="card-header">Upcoming Project Deadlines & Milestones</h3>
                 {upcomingDeadlines.length > 0 ? (
-                    <ul style={{listStyle: 'none', padding: '1rem'}}>
+                    <ul style={{ listStyle: 'none', padding: '1rem' }}>
                         {upcomingDeadlines.map(deadline => (
-                            <li key={deadline.id} style={{borderBottom: '1px solid #eee', padding: '0.5rem 0', display:'flex', justifyContent:'space-between'}}>
+                            <li key={deadline.id} style={{ borderBottom: '1px solid #eee', padding: '0.5rem 0', display: 'flex', justifyContent: 'space-between' }}>
                                 <span><strong>{deadline.title}</strong> {deadline.milestone !== "N/A" ? `(${deadline.milestone})` : ''}</span>
-                                <span>{deadline.due_date ? `Due: ${deadline.due_date}`: ''}</span>
+                                <span>{deadline.due_date ? `Due: ${deadline.due_date}` : ''}</span>
                             </li>
                         ))}
                     </ul>
-                ) : <p style={{padding: '1rem'}}>No upcoming deadlines or milestones.</p>}
+                ) : <p style={{ padding: '1rem' }}>No upcoming deadlines or milestones.</p>}
             </div>
 
-            <div className="quick-actions" style={{marginTop: '1.5rem'}}>
+            <div className="card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="card-header">Recent File Uploads</h3>
+                <ul className="upload-list">
+                    {recentFileUploads.map((file, index) => (
+                        <li key={file.id || `file-${index}`} className="upload-item">
+                            <div className="file-icon">
+                                {file.type === 'pdf' && ICONS.filePdf}
+                                {file.type === 'image' && ICONS.fileImage}
+                                {file.type === 'dwg' && ICONS.fileDocument}
+                            </div>
+                            <div className="file-info">
+                                <p>{file.filename}</p>
+                                <div className="details">
+                                    Uploaded by {file.uploaded_by} to project {file.project}
+                                </div>
+                            </div>
+                            <div className="file-date">{file.date}</div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="quick-actions" style={{ marginTop: '1.5rem' }}>
                 <div className="actions-header">
                     <h2>Quick Actions</h2>
                     <div className="action-buttons">

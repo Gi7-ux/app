@@ -39,6 +39,7 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
     const [recentCommunications, setRecentCommunications] = useState([]);
     const [earningsSummary, setEarningsSummary] = useState(null); // Example: { current_month: 1200, pending: 300, lifetime: 15000 }
     const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+    const [recentFileUploads, setRecentFileUploads] = useState([]);
 
 
     const fetchData = async () => {
@@ -85,9 +86,9 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
             // Process communications response
             if (commsResponse.ok) {
                 const commsData = await commsResponse.json();
-                setRecentCommunications(commsData.length > 0 ? commsData : [{ action: "No recent communications.", created_at: new Date().toISOString(), user_name:"System" }]);
+                setRecentCommunications(commsData.length > 0 ? commsData : [{ action: "No recent communications.", created_at: new Date().toISOString(), user_name: "System" }]);
             } else {
-                setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name:"Error" }]);
+                setRecentCommunications([{ action: "Could not load communications.", created_at: new Date().toISOString(), user_name: "Error" }]);
             }
 
             // Process deadlines response
@@ -98,13 +99,34 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
                     title: p.title,
                     due_date: p.due_date || "Not set",
                     next_task: (p.tasks && p.tasks.find(t => t.status !== 'Completed')?.title) || "N/A"
-                })).slice(0,3);
-                setUpcomingDeadlines(formattedDeadlines.length > 0 ? formattedDeadlines : [{id:0, title:"No upcoming deadlines for active projects.", due_date: "", next_task:""}]);
+                })).slice(0, 3);
+                setUpcomingDeadlines(formattedDeadlines.length > 0 ? formattedDeadlines : [{ id: 0, title: "No upcoming deadlines for active projects.", due_date: "", next_task: "" }]);
             } else {
-                setUpcomingDeadlines([{id:0, title:"Could not load deadlines.", due_date:"", next_task:""}]);
+                setUpcomingDeadlines([{ id: 0, title: "Could not load deadlines.", due_date: "", next_task: "" }]);
             }
 
 
+            // Fetch recent file uploads for freelancer
+            try {
+                const filesResponse = await fetch('/api/files/recent.php?limit=5', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const filesData = await filesResponse.json();
+                if (filesResponse.ok && Array.isArray(filesData)) {
+                    setRecentFileUploads(filesData.map(f => ({
+                        id: f.id,
+                        filename: f.filename,
+                        type: f.mime_type && f.mime_type.includes('pdf') ? 'pdf' : (f.mime_type && f.mime_type.includes('image') ? 'image' : (f.mime_type && f.mime_type.includes('dwg') ? 'dwg' : 'file')),
+                        uploaded_by: f.uploaded_by,
+                        project: f.project,
+                        date: f.created_at ? new Date(f.created_at).toLocaleDateString() : ''
+                    })));
+                } else {
+                    setRecentFileUploads([]);
+                }
+            } catch (err) {
+                setRecentFileUploads([]);
+            }
         } catch (err) {
             setError('An error occurred while fetching dashboard data: ' + err.message);
             console.error(err);
@@ -138,24 +160,24 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
                 <div className="card">
                     <h3 className="card-header">Earnings Summary</h3>
                     {earningsSummary ? (
-                        <div style={{padding: '1rem'}}>
+                        <div style={{ padding: '1rem' }}>
                             <p>Current Month Earnings: {earningsSummary.current_month}</p>
                             <p>Pending Payments: {earningsSummary.pending_payments}</p>
                             <p>Lifetime Earnings: {earningsSummary.lifetime_earnings}</p>
                             {/* Link to full earnings/payment history page */}
-                            <button className="action-link" style={{marginTop: '0.5rem'}} onClick={() => setCurrentPage('earningsHistory')}>View Detailed Earnings</button>
+                            <button className="action-link" style={{ marginTop: '0.5rem' }} onClick={() => setCurrentPage('earningsHistory')}>View Detailed Earnings</button>
                         </div>
-                    ) : <p style={{padding: '1rem'}}>Loading earnings data...</p>}
+                    ) : <p style={{ padding: '1rem' }}>Loading earnings data...</p>}
                 </div>
 
                 <div className="card">
                     <h3 className="card-header">Recent Communications</h3>
-                    <ul className="activity-list" style={{maxHeight: '200px', overflowY: 'auto', padding: '0 1rem 1rem 1rem'}}>
+                    <ul className="activity-list" style={{ maxHeight: '200px', overflowY: 'auto', padding: '0 1rem 1rem 1rem' }}>
                         {recentCommunications.map((item, i) => (
-                            <li key={i} className="activity-item" style={{padding: '0.5rem 0', borderBottom: '1px solid #eee'}}>
+                            <li key={i} className="activity-item" style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
                                 <div className="activity-content">
-                                    <p style={{margin:0}}>{item.action} {(item.user_name && item.user_name !== "System" && item.user_name !== "Error") ? `(with ${item.user_name})` : ''}</p>
-                                    <span className="time" style={{fontSize: '0.8em'}}>{new Date(item.created_at).toLocaleString()}</span>
+                                    <p style={{ margin: 0 }}>{item.action} {(item.user_name && item.user_name !== "System" && item.user_name !== "Error") ? `(with ${item.user_name})` : ''}</p>
+                                    <span className="time" style={{ fontSize: '0.8em' }}>{new Date(item.created_at).toLocaleString()}</span>
                                 </div>
                             </li>
                         ))}
@@ -165,24 +187,46 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
 
             <div className="card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="card-header">Upcoming Deadlines & Tasks</h3>
-                 {upcomingDeadlines.length > 0 ? (
-                    <ul style={{listStyle: 'none', padding: '1rem'}}>
+                {upcomingDeadlines.length > 0 ? (
+                    <ul style={{ listStyle: 'none', padding: '1rem' }}>
                         {upcomingDeadlines.map(deadline => (
-                            <li key={deadline.id} style={{borderBottom: '1px solid #eee', padding: '0.5rem 0', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <li key={deadline.id} style={{ borderBottom: '1px solid #eee', padding: '0.5rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
                                     <strong>{deadline.title}</strong>
                                     <br />
                                     <small>Next Task: {deadline.next_task}</small>
                                 </div>
-                                <span>{deadline.due_date ? `Due: ${deadline.due_date}`: ''}</span>
+                                <span>{deadline.due_date ? `Due: ${deadline.due_date}` : ''}</span>
                             </li>
                         ))}
                     </ul>
-                ) : <p style={{padding: '1rem'}}>No upcoming deadlines or tasks for active projects.</p>}
+                ) : <p style={{ padding: '1rem' }}>No upcoming deadlines or tasks for active projects.</p>}
             </div>
 
 
-            <div className="quick-actions" style={{marginTop: '1.5rem'}}>
+            <div className="card" style={{ marginTop: '1.5rem' }}>
+                <h3 className="card-header">Recent File Uploads</h3>
+                <ul className="upload-list">
+                    {recentFileUploads.map((file, index) => (
+                        <li key={file.id || `file-${index}`} className="upload-item">
+                            <div className="file-icon">
+                                {file.type === 'pdf' && ICONS.filePdf}
+                                {file.type === 'image' && ICONS.fileImage}
+                                {file.type === 'dwg' && ICONS.fileDocument}
+                            </div>
+                            <div className="file-info">
+                                <p>{file.filename}</p>
+                                <div className="details">
+                                    Uploaded by {file.uploaded_by} to project {file.project}
+                                </div>
+                            </div>
+                            <div className="file-date">{file.date}</div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="quick-actions" style={{ marginTop: '1.5rem' }}>
                 <div className="actions-header">
                     <h2>Quick Actions</h2>
                     <div className="action-buttons">

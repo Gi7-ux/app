@@ -25,10 +25,21 @@ export const ProjectStatusReport = () => {
     const fetchReportData = async () => {
         setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/reports/project_status.php', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setReportData(data);

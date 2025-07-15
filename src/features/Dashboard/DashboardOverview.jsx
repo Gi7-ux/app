@@ -45,8 +45,9 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                 const statsResponse = await fetch('/api/dashboard/stats.php', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const statsData = await statsResponse.json();
+                let statsData = null;
                 if (statsResponse.ok) {
+                    statsData = await statsResponse.json();
                     const statsArray = [
                         { label: 'Total Users', value: statsData.total_users, icon: 'users', color: 'blue' },
                         { label: 'Total Projects', value: statsData.total_projects, icon: 'projectsTotal', color: 'teal' },
@@ -56,16 +57,16 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                     ];
                     setStats(statsArray);
                 } else {
-                    setError(statsData.message || 'Failed to fetch stats.');
+                    setError('Failed to fetch stats.');
                 }
 
                 // Fetch activity
                 const activityResponse = await fetch('/api/activity/get.php?limit=5', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const activityData = await activityResponse.json();
+                let activityData = null;
                 if (activityResponse.ok) {
-                    // Ensure each activity item has an id for proper key generation
+                    activityData = await activityResponse.json();
                     const processedActivity = Array.isArray(activityData)
                         ? activityData.map((item, index) => ({
                             ...item,
@@ -74,29 +75,37 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                         : [];
                     setActivity(processedActivity);
                 } else {
-                    // Set sample activity data if API fails
-                    setActivity([
-                        { id: 1, action: "Project 'Modern Residential House' status updated to In Progress.", user_name: "Admin Architex", created_at: "2025-07-08T10:30:00Z" },
-                        { id: 2, action: "New application received for 'Open Concept Kitchen Remodel'.", user_name: "System", created_at: "2025-07-08T09:15:00Z" },
-                        { id: 3, action: "Your application for 'Urban Park Landscape' was accepted!", user_name: "Client", created_at: "2025-07-08T08:45:00Z" },
-                        { id: 4, action: "Job card 'Concept Sketches' for 'Modern Residential House' is now in Progress.", user_name: "Freelancer", created_at: "2025-07-07T16:20:00Z" },
-                        { id: 5, action: "Alice Architect logged 4 hours on 'Concept Sketches'.", user_name: "Alice Architect", created_at: "2025-07-07T15:10:00Z" }
-                    ]);
+                    setActivity([]);
                 }
 
-                // Set sample file uploads data
-                setRecentFileUploads([
-                    { id: 1, filename: "Initial_Brief.pdf", type: "pdf", uploaded_by: "Charlie Client", project: "Modern Residential House Design", date: "7/8/2025" },
-                    { id: 2, filename: "Concept_Sketches_RevA.png", type: "image", uploaded_by: "Alice Architect", project: "Modern Residential House Design", date: "7/8/2025" },
-                    { id: 3, filename: "Site_Survey.dwg", type: "dwg", uploaded_by: "Admin Axis", project: "Urban Park Landscape Architecture", date: "6/30/2025" }
-                ]);
+                // Fetch recent file uploads (live)
+                const filesResponse = await fetch('/api/files/recent.php?limit=5', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                let filesData = null;
+                if (filesResponse.ok) {
+                    filesData = await filesResponse.json();
+                    if (Array.isArray(filesData)) {
+                        setRecentFileUploads(filesData.map(f => ({
+                            id: f.id,
+                            filename: f.filename,
+                            type: f.mime_type && f.mime_type.includes('pdf') ? 'pdf' : (f.mime_type && f.mime_type.includes('image') ? 'image' : (f.mime_type && f.mime_type.includes('dwg') ? 'dwg' : 'file')),
+                            uploaded_by: f.uploaded_by,
+                            project: f.project,
+                            date: f.created_at ? new Date(f.created_at).toLocaleDateString() : ''
+                        })));
+                    } else {
+                        setRecentFileUploads([]);
+                    }
+                } else {
+                    setRecentFileUploads([]);
+                }
 
             } catch (err) {
                 setError('An error occurred while fetching dashboard data.');
                 console.error(err);
             }
         };
-
         fetchData();
     }, [navigate]);
 

@@ -16,6 +16,7 @@ export const UserForm = ({ user, onSave, onCancel }) => {
         password: '', // Only used for new user
         avatar: user?.avatar || null,
     });
+    const [feedback, setFeedback] = useState({ type: '', message: '' });
 
     // Use a separate state for the skills input string
     const [skillsInput, setSkillsInput] = useState(user?.skills?.join(', ') || '');
@@ -88,22 +89,18 @@ export const UserForm = ({ user, onSave, onCancel }) => {
     }, []);
 
     const generatePreview = useCallback((crop) => {
-        if (!imgRef.current || !previewCanvasRef.current || !crop?.width || !crop?.height) {
-            return;
-        }
-
-        const image = imgRef.current;
         const canvas = previewCanvasRef.current;
         const ctx = canvas.getContext('2d');
 
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
+        const imageEl = imgRef.current;
+        const scaleX = imageEl.naturalWidth / imageEl.width;
+        const scaleY = imageEl.naturalHeight / imageEl.height;
 
         const pixelRatio = window.devicePixelRatio;
-        const cropX = crop.x * scaleX / 100 * image.naturalWidth;
-        const cropY = crop.y * scaleY / 100 * image.naturalHeight;
-        const cropWidth = crop.width * scaleX / 100 * image.naturalWidth;
-        const cropHeight = crop.height * scaleY / 100 * image.naturalHeight;
+        const cropX = crop.x * scaleX / 100 * imageEl.naturalWidth;
+        const cropY = crop.y * scaleY / 100 * imageEl.naturalHeight;
+        const cropWidth = crop.width * scaleX / 100 * imageEl.naturalWidth;
+        const cropHeight = crop.height * scaleY / 100 * imageEl.naturalHeight;
 
         canvas.width = 150 * pixelRatio;
         canvas.height = 150 * pixelRatio;
@@ -111,7 +108,7 @@ export const UserForm = ({ user, onSave, onCancel }) => {
         ctx.imageSmoothingQuality = 'high';
 
         ctx.drawImage(
-            image,
+            imageEl,
             cropX,
             cropY,
             cropWidth,
@@ -154,6 +151,7 @@ export const UserForm = ({ user, onSave, onCancel }) => {
             return;
         }
         onSave(submitData);
+        setFeedback({ type: 'success', message: user ? 'User updated successfully!' : 'User created successfully!' });
     };
 
     return (
@@ -168,6 +166,24 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                         <button type="button" className="close-btn" onClick={onCancel}>&times;</button>
                     </div>
 
+                    {feedback.message && (
+                        <div
+                            style={{
+                                margin: '0 0 1rem 0',
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '8px',
+                                background: feedback.type === 'success' ? 'linear-gradient(90deg, #d1fae5, #a7f3d0)' : 'linear-gradient(90deg, #fee2e2, #fecaca)',
+                                color: feedback.type === 'success' ? '#065f46' : '#b91c1c',
+                                fontWeight: 500,
+                                fontSize: '1rem',
+                                textAlign: 'center',
+                                border: feedback.type === 'success' ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                            }}
+                            role="alert"
+                        >
+                            {feedback.message}
+                        </div>
+                    )}
                     <div className="modal-body">
                         {/* Profile Picture Section */}
                         <div className="profile-section">
@@ -200,6 +216,24 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                                 />
                             </div>
                         </div>
+                        {feedback.message && (
+                            <div
+                                style={{
+                                    margin: '0 0 1rem 0',
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: '8px',
+                                    background: feedback.type === 'success' ? 'linear-gradient(90deg, #d1fae5, #a7f3d0)' : 'linear-gradient(90deg, #fee2e2, #fecaca)',
+                                    color: feedback.type === 'success' ? '#065f46' : '#b91c1c',
+                                    fontWeight: 500,
+                                    fontSize: '1rem',
+                                    textAlign: 'center',
+                                    border: feedback.type === 'success' ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                                }}
+                                role="alert"
+                            >
+                                {feedback.message}
+                            </div>
+                        )}
 
                         {/* User Information Section */}
                         <div className="user-info-section">

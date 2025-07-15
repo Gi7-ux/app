@@ -17,31 +17,43 @@ const getNavItems = (role) => {
     }
 };
 
-const Sidebar = ({ user, navItems, currentPage, setCurrentPage }) => (
-    <nav className="sidebar">
-        <div className="sidebar-header">
-            <BirdIcon style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }} />
-            <span>Architex Axis</span>
-        </div>
-        <div className="sidebar-profile">
-            <div className="avatar">
-                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+const Sidebar = ({ user, navItems, currentPage, setCurrentPage }) => {
+    return (
+        <nav className="sidebar" style={{ position: 'relative' }}>
+            <div className="sidebar-header">
+                <BirdIcon style={{ fontSize: '1.5rem', color: 'var(--primary-color)' }} />
+                <span>Architex Axis</span>
             </div>
-            <div className="profile-info">
-                <h3>{user.name}</h3>
-                <p>{user.role}</p>
-            </div>
-        </div>
-        <div className="nav-menu">
-            {navItems.map(item => (
-                <div key={item.id} className={`nav-item ${currentPage === item.id ? 'active' : ''}`} onClick={() => setCurrentPage(item.id)}>
-                    {ICONS[item.icon]}
-                    <span>{item.label}</span>
+            <div className="sidebar-profile">
+                <div className="avatar">
+                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
-            ))}
-        </div>
-    </nav>
-);
+                <div className="profile-info">
+                    <h3>{user.name}</h3>
+                    <p>{user.role}</p>
+                </div>
+            </div>
+            <div className="nav-menu" style={{ marginBottom: 60 }}>
+                {navItems.filter(item => item.id !== 'settings').map(item => (
+                    <div key={item.id} className={`nav-item ${currentPage === item.id ? 'active' : ''}`} onClick={() => setCurrentPage(item.id)}>
+                        {ICONS[item.icon]}
+                        <span>{item.label}</span>
+                    </div>
+                ))}
+            </div>
+            <div style={{ position: 'absolute', right: 24, bottom: 24, zIndex: 100 }}>
+                <div
+                    className={`nav-item ${currentPage === 'settings' ? 'active' : ''}`}
+                    style={{ width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                    onClick={() => setCurrentPage('settings')}
+                    title="Settings"
+                >
+                    {ICONS.settings}
+                </div>
+            </div>
+        </nav>
+    );
+};
 
 Sidebar.propTypes = {
     user: PropTypes.object.isRequired,
@@ -71,6 +83,7 @@ Header.propTypes = {
 const Dashboard = ({ userRole, onLogout }) => {
     const [currentPage, setCurrentPage] = useState('dashboard');
     const [user, setUser] = useState(null);
+    const [userError, setUserError] = useState('');
     const navItems = getNavItems(userRole);
 
     useEffect(() => {
@@ -90,13 +103,16 @@ const Dashboard = ({ userRole, onLogout }) => {
                 const data = await response.json();
                 if (response.ok) {
                     setUser(data);
+                    setUserError('');
                 } else {
+                    setUserError(data.message || 'Failed to fetch user data.');
                     console.error('Failed to fetch user data:', data);
                     if (response.status === 401) {
                         onLogout();
                     }
                 }
             } catch (error) {
+                setUserError('Error fetching user data: ' + error.message);
                 console.error('Error fetching user data:', error);
             }
         };
@@ -107,6 +123,9 @@ const Dashboard = ({ userRole, onLogout }) => {
     const activeItem = navItems.find(item => item.id === currentPage) || navItems[0];
 
     if (!user) {
+        if (userError) {
+            return <div style={{ color: 'red', padding: '2rem' }}>{userError}</div>;
+        }
         return <div>Loading...</div>;
     }
 

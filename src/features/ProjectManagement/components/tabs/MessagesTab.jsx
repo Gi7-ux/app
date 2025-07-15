@@ -13,20 +13,21 @@ export const MessagesTab = ({ project }) => {
             setLoadingUser(true);
             setErrorUser('');
             try {
-                const token = localStorage.getItem('access_token');
-                if (!token) {
-                    setErrorUser('No access token found. Please login.');
-                    // Potentially redirect to login: window.location.href = '/login';
+                const { AuthService } = await import('../../../services/AuthService.js');
+                const token = AuthService.getAccessToken();
+                if (!AuthService.isAuthenticated()) {
+                    await AuthService.logout();
+                    window.location.href = '/login';
                     return;
                 }
-                // Attempt to read current user data from /api/users/read_one.php?id=current or similar
-                // For now, using a placeholder if a dedicated "current user" endpoint isn't confirmed.
-                // Let's assume /api/auth/me endpoint exists or /api/users/read_one.php can take 'me' or no ID for current user.
-                // Using the one from Messages.jsx for consistency for now:
                 const response = await fetch('/api/users/read_one.php', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (response.status === 401) { window.location.href = '/login'; return; }
+                if (response.status === 401) {
+                    await AuthService.logout();
+                    window.location.href = '/login';
+                    return;
+                }
                 const data = await response.json();
                 if (response.ok) {
                     setCurrentUser(data);

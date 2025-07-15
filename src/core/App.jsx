@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginScreen } from './LoginScreen.jsx';
 import { ResetPasswordScreen } from './ResetPasswordScreen.jsx';
 import { RegisterScreen } from './RegisterScreen.jsx'; // Import RegisterScreen
 import Dashboard from './Dashboard.jsx';
+import Settings from '../features/Settings/Settings.jsx';
 import { AuthService } from '../services/AuthService.js';
 
 // A wrapper for protected routes
@@ -14,19 +16,18 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-export const App = () => {
-    // This state is to trigger re-render on login/logout
-    const [isAuthenticated, setIsAuthenticated] = useState(AuthService.isAuthenticated());
+ProtectedRoute.propTypes = {
+    children: PropTypes.node.isRequired,
+};
 
+export const App = () => {
     const handleLogin = (role, accessToken, refreshToken) => {
         AuthService.login(accessToken, refreshToken, role);
-        setIsAuthenticated(true);
         // Navigation to dashboard will be handled by ProtectedRoute or direct navigation
     };
 
     const handleLogout = () => {
         AuthService.logout();
-        setIsAuthenticated(false);
         // Navigation to login will be handled by ProtectedRoute
     };
 
@@ -34,7 +35,7 @@ export const App = () => {
     useEffect(() => {
         const handleStorageChange = (event) => {
             if ((event.key === 'access_token' || event.key === 'user_role') && !event.newValue) {
-                setIsAuthenticated(false);
+                // Optionally force a rerender or redirect if needed
             }
         };
         window.addEventListener('storage', handleStorageChange);
@@ -52,14 +53,19 @@ export const App = () => {
                     AuthService.isAuthenticated() ? <Navigate to="/" replace /> : <LoginScreen onLogin={handleLogin} />
                 }
             />
-            <Route path="/register" element={<RegisterScreen />} /> {/* Add RegisterScreen route */}
+            <Route path="/register" element={<RegisterScreen />} />
             <Route path="/reset-password" element={<ResetPasswordScreen />} />
+            <Route path="/settings" element={
+                <ProtectedRoute>
+                    <Settings />
+                </ProtectedRoute>
+            } />
             <Route
-                path="/*" // All other routes are protected
+                path="/*"
                 element={
                     <ProtectedRoute>
                         <Dashboard
-                            userRole={AuthService.getRole()} // Get role directly inside dashboard if needed per page
+                            userRole={AuthService.getRole()}
                             onLogout={handleLogout}
                         />
                     </ProtectedRoute>

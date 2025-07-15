@@ -73,7 +73,9 @@ export const NotificationBell = () => {
         } catch (err) {
             console.error("Failed to handle notification click:", err);
              // Still try to navigate if link exists
-            if (notification.link) navigate(notification.link);
+            if (notification.link) {
+                navigate(notification.link);
+            }
             setIsOpen(false);
         }
     };
@@ -128,10 +130,10 @@ export const NotificationBell = () => {
                                     role="button"
                                     tabIndex="0"
                                     key={n.id}
-                                    className={`notification-item ${!n.is_read ? 'unread' : ''}`}
+                                    className={`notification-item ${n.is_read ? '' : 'unread'}`}
                                     onClick={() => handleNotificationClick(n)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleNotificationClick(n)}
-                                    style={{padding: '10px', borderBottom: '1px solid #f5f5f5', cursor: 'pointer', background: !n.is_read ? '#f0f8ff' : 'transparent'}}
+                                    style={{padding: '10px', borderBottom: '1px solid #f5f5f5', cursor: 'pointer', background: n.is_read ? 'transparent' : '#f0f8ff'}}
                                 >
                                     <p style={{margin: 0, fontSize: '0.9rem'}}>{n.message}</p>
                                     <small style={{fontSize: '0.75rem', color: '#888'}}>{new Date(n.created_at).toLocaleString()}</small>

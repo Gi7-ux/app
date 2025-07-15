@@ -95,11 +95,22 @@ export const AssignmentsTab = ({ project, onUpdateProject }) => {
         } else {
             const fetchAssignments = async () => {
                 try {
-                    const token = localStorage.getItem('access_token');
+                    const { AuthService } = await import('../../../../services/AuthService.js');
+                    const token = AuthService.getAccessToken();
+                    if (!AuthService.isAuthenticated()) {
+                        await AuthService.logout();
+                        window.location.href = '/login';
+                        return;
+                    }
                     const url = getApiUrl(API_ENDPOINTS.ASSIGNMENTS.GET, { project_id: project.id });
                     const response = await fetch(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
+                    if (response.status === 401) {
+                        await AuthService.logout();
+                        window.location.href = '/login';
+                        return;
+                    }
                     if (response.ok) {
                         setAssignments(await response.json());
                     } else {
@@ -114,11 +125,22 @@ export const AssignmentsTab = ({ project, onUpdateProject }) => {
 
         const fetchFreelancers = async () => {
             try {
-                const token = localStorage.getItem('access_token');
+                const { AuthService } = await import('../../../../services/AuthService.js');
+                const token = AuthService.getAccessToken();
+                if (!AuthService.isAuthenticated()) {
+                    await AuthService.logout();
+                    window.location.href = '/login';
+                    return;
+                }
                 const url = getApiUrl(API_ENDPOINTS.USERS.LIST_FREELANCERS);
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (response.status === 401) {
+                    await AuthService.logout();
+                    window.location.href = '/login';
+                    return;
+                }
                 if (response.ok) {
                     const data = await response.json();
                     setFreelancers(Array.isArray(data) ? data : []);
@@ -136,14 +158,24 @@ export const AssignmentsTab = ({ project, onUpdateProject }) => {
 
     const saveAssignment = async (assignment) => {
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const saveUrl = getApiUrl(API_ENDPOINTS.ASSIGNMENTS.SAVE);
             const saveResponse = await fetch(saveUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ ...assignment, project_id: project.id })
             });
-
+            if (saveResponse.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             if (!saveResponse.ok) {
                 console.error('Failed to save assignment:', saveResponse.status, saveResponse.statusText);
                 return;
@@ -154,7 +186,11 @@ export const AssignmentsTab = ({ project, onUpdateProject }) => {
             const fetchResponse = await fetch(fetchUrl, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
+            if (fetchResponse.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             if (fetchResponse.ok) {
                 setAssignments(await fetchResponse.json());
             } else {

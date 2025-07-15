@@ -110,15 +110,16 @@ const BroadcastMessageForm = ({ currentUser }) => {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
-            const responseData = await response.json();
+            let responseData = null;
             if (response.ok) {
+                responseData = await response.json();
                 setSuccessMessage(`Broadcast sent successfully to ${responseData.recipient_count || ''} recipients! Thread ID: ${responseData.thread_id}`);
                 setMessageText(''); // Clear form
                 setSelectedProjectId('');
                 setSelectedUserIds([]);
                 // setRecipientScope('all'); // Optionally reset scope
             } else {
-                throw new Error(responseData.message || 'Failed to send broadcast.');
+                setError('Failed to send broadcast.');
             }
         } catch (err) {
             setError(`Error sending broadcast: ${err.message}`);

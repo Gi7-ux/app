@@ -15,6 +15,21 @@ export class AuthService {
         return localStorage.getItem(ACCESS_TOKEN_KEY);
     }
 
+    static getUserId() {
+        const token = this.getAccessToken();
+        if (!token) {
+            return null;
+        }
+        try {
+            const decoded = jwtDecode(token);
+            // Adjust claim name as needed (sub, user_id, id)
+            return decoded.sub || decoded.user_id || decoded.id || null;
+        } catch (e) {
+            console.error('Error decoding token for user ID:', e);
+            return null;
+        }
+    }
+
     static getRefreshToken() {
         // Refresh token is now HttpOnly, so it's not accessible via JavaScript
         return null;

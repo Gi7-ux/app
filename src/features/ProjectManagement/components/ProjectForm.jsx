@@ -39,12 +39,23 @@ function ProjectForm({ project, onSave, onCancel, clients, freelancers }) {
             return;
         }
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/users/create.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ ...user, role, password: 'password' })
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setAddUserSuccess(`${role === 'client' ? 'Client' : 'Freelancer'} added! Please refresh the list.`);

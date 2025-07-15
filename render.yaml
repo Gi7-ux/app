@@ -1,0 +1,20 @@
+services:
+  - name: app-frontend
+    type: web
+    runtime: static
+    rootDir: src
+    buildCommand: yarn; yarn build
+    staticPublishPath: ../dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    plan: free
+
+  - name: app-backend
+    type: web
+    runtime: docker
+    rootDir: api
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    plan: free

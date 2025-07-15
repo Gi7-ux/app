@@ -17,11 +17,21 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
     const fetchUserThreads = async () => {
         setIsLoading(true); setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/messages/get_threads.php', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (response.status === 401) { window.location.href = '/login'; return; }
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setThreads(data);
@@ -44,11 +54,21 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
     const fetchProjects = async () => {
         setIsLoading(true); setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/projects/read.php', { // Assuming read.php fetches all projects
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (response.status === 401) { window.location.href = '/login'; return; }
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setProjects(data.records || []); // Assuming data has a 'records' key
@@ -69,14 +89,24 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
         if (!projectId) return;
         setIsLoading(true); setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             // Ensure 'project_communication' thread
             const ensureCommThreadResponse = await fetch('/api/messages/ensure_thread.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ project_id: projectId, type: 'project_communication' })
             });
-            if (ensureCommThreadResponse.status === 401) { window.location.href = '/login'; return; }
+            if (ensureCommThreadResponse.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const commThreadData = await ensureCommThreadResponse.json();
             if (!ensureCommThreadResponse.ok) throw new Error(commThreadData.message || 'Failed to ensure project communication thread.');
 
@@ -89,13 +119,17 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ project_id: projectId, type: 'client_admin' })
                 });
-                if (ensureClientAdminThreadResponse.status === 401) { window.location.href = '/login'; return; }
+                if (ensureClientAdminThreadResponse.status === 401) {
+                    await AuthService.logout();
+                    window.location.href = '/login';
+                    return;
+                }
                 const clientAdminThreadData = await ensureClientAdminThreadResponse.json();
                 if (!ensureClientAdminThreadResponse.ok) throw new Error(clientAdminThreadData.message || 'Failed to ensure client_admin thread.');
 
                 // Avoid duplicates if by some chance they are the same (should not happen with correct types)
                 if (clientAdminThreadData.thread_id !== commThreadData.thread_id) {
-                     projectThreads.push({ id: clientAdminThreadData.thread_id, type: 'client_admin', projectId: projectId, subject: `Admin Channel`});
+                    projectThreads.push({ id: clientAdminThreadData.thread_id, type: 'client_admin', projectId: projectId, subject: `Admin Channel` });
                 }
             }
 
@@ -131,11 +165,21 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
         }
 
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (response.status === 401) { window.location.href = '/login'; return; }
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setMessages(data);
@@ -180,7 +224,7 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
 
     const handleSendMessage = async (text, fileId = null) => {
         if (!activeThread && !projectId) {
-             alert('No active conversation selected and no project context.'); return;
+            alert('No active conversation selected and no project context.'); return;
         }
         if (!text && !fileId) {
             alert('Cannot send an empty message without a file.'); return;
@@ -188,7 +232,13 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
 
         setIsLoading(true); // Indicate sending
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const body = {
                 text: text || '', // Send empty string if only file
                 file_id: fileId
@@ -196,13 +246,13 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
 
             if (activeThread) {
                 body.thread_id = activeThread.id;
-                 // If the active thread is project-scoped, its project_id is implicitly handled by the thread_id on backend
+                // If the active thread is project-scoped, its project_id is implicitly handled by the thread_id on backend
             } else if (projectId) {
                 // This case implies sending a message to the project's default channel without a specific thread selected yet
                 // The backend send_message.php needs to correctly find/create the 'project_communication' thread
                 body.project_id = projectId;
             } else {
-                 alert('Cannot determine target for sending message.'); setIsLoading(false); return;
+                alert('Cannot determine target for sending message.'); setIsLoading(false); return;
             }
 
             const response = await fetch('/api/messages/send_message.php', {
@@ -210,7 +260,11 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(body)
             });
-            if (response.status === 401) { window.location.href = '/login'; return; }
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const responseData = await response.json();
             if (response.ok) {
                 // If a new thread was created by sending the message (e.g. first message in project context)
@@ -224,12 +278,12 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
                         fetchCurrentMessages(); // Refresh messages for the current active thread or project
                     }
                 } else {
-                     fetchCurrentMessages(); // Refresh messages for the current active thread or project
+                    fetchCurrentMessages(); // Refresh messages for the current active thread or project
                 }
             } else {
                 alert(responseData.message || 'Failed to send message.');
             }
-        } catch(err) {
+        } catch (err) {
             alert('An error occurred while sending the message: ' + err.message);
             console.error('Send message error:', err);
         } finally {
@@ -240,20 +294,30 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
     const handleModerateMessage = async (messageId, newStatus) => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/messages/moderate_message.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ message_id: messageId, status: newStatus })
             });
-            if (response.status === 401) { window.location.href = '/login'; return; }
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             if (response.ok) {
                 fetchCurrentMessages(); // Refresh messages
             } else {
                 const data = await response.json();
                 alert(data.message || 'Failed to moderate message.');
             }
-        } catch(err) {
+        } catch (err) {
             alert('An error occurred while moderating the message: ' + err.message);
         } finally {
             setIsLoading(false);
@@ -280,7 +344,7 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
     return (
         <div className="messages-page" style={{ display: 'flex', height: '100%', maxHeight: 'calc(100vh - 150px)', background: 'var(--white)', borderRadius: '0.75rem', border: '1px solid var(--gray-200)', overflow: 'hidden' }}>
             {showConversationList && (currentUser.role === 'admin' && !projectId) && (
-                 <AdminProjectSelector
+                <AdminProjectSelector
                     projects={projects} // Pass fetched projects
                     threads={threads} // All threads for admin
                     onSelectThread={handleSelectThread}
@@ -289,7 +353,7 @@ export const MessagingContainer = ({ currentUser, projectId = null }) => { // Ad
                 />
             )}
             {showConversationList && !(currentUser.role === 'admin' && !projectId) && (
-                 <ConversationList
+                <ConversationList
                     threads={threads} // Filtered for project if projectId, or all user threads
                     onSelectThread={handleSelectThread}
                     activeThreadId={activeThread?.id}

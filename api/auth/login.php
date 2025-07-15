@@ -66,13 +66,11 @@ if ($num > 0) {
 
     if (password_verify($data->password, $password2)) {
         // log_activity($db, $id, "User logged in");
-        
-        $issuer_claim = "YOUR_DOMAIN.com"; // this can be the servername
+        $issuer_claim = "YOUR_DOMAIN.com";
         $audience_claim = "THE_AUDIENCE";
-        $issuedat_claim = time(); // issued at
-        $notbefore_claim = $issuedat_claim; //not before in seconds
-        // Shorten access token expiry, e.g., to 15 minutes, to rely on refresh mechanism
-        $access_token_expire_seconds = 15 * 60; // 15 minutes
+        $issuedat_claim = time();
+        $notbefore_claim = $issuedat_claim;
+        $access_token_expire_seconds = 15 * 60;
         $expire_claim = $issuedat_claim + $access_token_expire_seconds;
 
         $token = array(
@@ -92,11 +90,10 @@ if ($num > 0) {
         );
 
         http_response_code(200);
-
         $access_token = JWT::encode($token, JWT_SECRET, 'HS256');
 
         // Generate Refresh Token
-        $refresh_token_expiry_days = 7; // e.g., 7 days
+        $refresh_token_expiry_days = 7;
         $refresh_token_expiry_seconds = $refresh_token_expiry_days * 24 * 60 * 60;
         $refresh_token_value = bin2hex(random_bytes(32));
         $refresh_token_hash = hash('sha256', $refresh_token_value);
@@ -104,7 +101,6 @@ if ($num > 0) {
 
         // Store refresh token hash in database
         try {
-            // Invalidate old refresh tokens for this user (optional, good practice)
             $invalidate_old_stmt = $db->prepare("UPDATE user_refresh_tokens SET revoked_at = NOW() WHERE user_id = :user_id AND revoked_at IS NULL");
             $invalidate_old_stmt->bindParam(':user_id', $id);
             $invalidate_old_stmt->execute();
@@ -115,29 +111,37 @@ if ($num > 0) {
             $store_refresh_stmt->bindParam(':expires_at', $refresh_token_expires_at);
             $store_refresh_stmt->execute();
         } catch (PDOException $e) {
-            // Log error, but proceed with login if access token was generated.
-            // User might not be able to refresh session later.
             error_log("Failed to store refresh token for user ID {$id}: " . $e->getMessage());
-            // Optionally, you could fail the login here if refresh token storage is critical.
-            // For now, we'll allow login to succeed.
         }
+
+        // Set refresh token as secure HttpOnly cookie
+        // Set secure=false for localhost, true for production
+        $isLocalhost = in_array($_SERVER['HTTP_ORIGIN'] ?? '', ['http://localhost:5173', 'http://localhost:5174']);
+        $cookieParams = [
+            'expires' => $issuedat_claim + $refresh_token_expiry_seconds,
+            'path' => '/',
+            'domain' => '', // Set your domain if needed
+            'secure' => !$isLocalhost, // false for localhost, true for production
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ];
+        setcookie('refresh_token', $refresh_token_value, $cookieParams);
 
         echo json_encode(
             array(
-                "message" => "Successful login.",
+                "message" => "Login successful.",
                 "access_token" => $access_token,
-                "refresh_token" => $refresh_token_value, // Send plain refresh token to client
                 "email" => $email,
                 "role" => $role,
-                "expires_at" => $expire_claim // Expiry of the access token
+                "expires_at" => $expire_claim
             )
         );
     } else {
-        http_response_code(401);
-        echo json_encode(array("message" => "Login failed. Incorrect password."));
+    http_response_code(401);
+    echo json_encode(array("message" => "Invalid credentials. Please check your email and password."));
     }
 } else {
     http_response_code(404);
-    echo json_encode(array("message" => "Login failed. User not found."));
+    echo json_encode(array("message" => "User not found. Please check your email address."));
 }
 ?>

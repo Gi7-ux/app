@@ -40,10 +40,20 @@ export const Billing = () => {
         try {
             // Assuming apiClient is configured to handle auth
             const response = await apiClient.get('/users/read.php');
-            setFreelancers(response.data.records.filter(u => u.role === 'freelancer'));
+            if (response.status === 401) {
+                setError('Unauthorized. Please log in again.');
+                setFreelancers([]);
+                return;
+            }
+            if (response.data && Array.isArray(response.data.records)) {
+                setFreelancers(response.data.records.filter(u => u.role === 'freelancer'));
+            } else {
+                setFreelancers([]);
+            }
         } catch (err) {
+            setError('Failed to fetch freelancers.');
+            setFreelancers([]);
             console.error("Failed to fetch freelancers:", err);
-            // Handle error silently as it's a supporting call
         }
     };
 
@@ -141,7 +151,7 @@ export const Billing = () => {
                     </div>
                     {error && <p style={{ color: 'red' }}>{error}</p>}
                     {!invoiceData && (
-                        <div className="table-container" style={{marginTop: '20px'}}>
+                        <div className="table-container" style={{ marginTop: '20px' }}>
                             <p>Select a freelancer and date range to generate an invoice for their time logs.</p>
                         </div>
                     )}
@@ -168,7 +178,7 @@ export const Billing = () => {
                     <PaymentList showAdminControls={userRole === 'admin'} />
                 </div>
             )}
-             {activeTab === 'paymentTracking' && !canViewPaymentTracking && (
+            {activeTab === 'paymentTracking' && !canViewPaymentTracking && (
                 <div className="tab-content" style={{ padding: '1.5rem' }}>
                     <p>You do not have permission to view payment tracking.</p>
                 </div>

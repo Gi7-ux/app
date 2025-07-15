@@ -46,19 +46,31 @@ export const ProjectManagement = () => {
 
     // Filters state
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All');
-    const [clientFilter, setClientFilter] = useState('All');
-    const [freelancerFilter, setFreelancerFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('All Statuses');
+    const [clientFilter, setClientFilter] = useState('All Clients');
+    const [freelancerFilter, setFreelancerFilter] = useState('All Freelancers');
+    const [showArchived, setShowArchived] = useState(false);
 
     const fetchProjects = async () => {
         setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/projects/read.php', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setProjects(data.records);
@@ -72,10 +84,21 @@ export const ProjectManagement = () => {
 
     const fetchClientsFreelancers = async () => {
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/users/list_clients_freelancers.php', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setClients(data.clients);
@@ -104,12 +127,23 @@ export const ProjectManagement = () => {
     const handleDeleteProject = async (id) => {
         setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const response = await fetch('/api/projects/delete.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ id })
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 setProjects(projects.filter(p => p.id !== id));
@@ -124,7 +158,13 @@ export const ProjectManagement = () => {
     const handleSaveProject = async (formData) => {
         setError('');
         try {
-            const token = localStorage.getItem('access_token');
+            const { AuthService } = await import('../../services/AuthService.js');
+            const token = AuthService.getAccessToken();
+            if (!AuthService.isAuthenticated()) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             let url, method, payload;
             if (editingProject) {
                 url = '/api/projects/update.php';
@@ -142,6 +182,11 @@ export const ProjectManagement = () => {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
+            if (response.status === 401) {
+                await AuthService.logout();
+                window.location.href = '/login';
+                return;
+            }
             const data = await response.json();
             if (response.ok) {
                 fetchProjects();
@@ -170,13 +215,14 @@ export const ProjectManagement = () => {
 
     const filteredProjects = useMemo(() => {
         return projects.filter(p => {
-            const searchMatch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-            const statusMatch = statusFilter === 'All' || p.status === statusFilter;
-            const clientMatch = clientFilter === 'All' || p.clientName === clientFilter;
-            const freelancerMatch = freelancerFilter === 'All' || p.freelancerName === freelancerFilter;
-            return searchMatch && statusMatch && clientMatch && freelancerMatch;
+            const searchMatch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+            const statusMatch = statusFilter === 'All Statuses' || p.status === statusFilter;
+            const clientMatch = clientFilter === 'All Clients' || p.clientName === clientFilter;
+            const freelancerMatch = freelancerFilter === 'All Freelancers' || p.freelancerName === freelancerFilter;
+            const archivedMatch = showArchived ? true : p.status !== 'Archived';
+            return searchMatch && statusMatch && clientMatch && freelancerMatch && archivedMatch;
         });
-    }, [projects, searchTerm, statusFilter, clientFilter, freelancerFilter]);
+    }, [projects, searchTerm, statusFilter, clientFilter, freelancerFilter, showArchived]);
 
     const selectedProject = projects.find(p => p.id === selectedProjectId);
 
@@ -188,263 +234,113 @@ export const ProjectManagement = () => {
         <>
             <div className="management-page">
                 <div className="management-header">
-                    <div className="header-title-group">
-                        <h1>Projects</h1>
-                        <div className="project-stats">
-                            <div className="stat-item">
-                                <span className="stat-number">{projects.length}</span>
-                                <span className="stat-label">Total Projects</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-number">{projects.filter(p => p.status === 'Open' || p.status === 'In Progress').length}</span>
-                                <span className="stat-label">Active</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-number">{projects.filter(p => p.status === 'Completed').length}</span>
-                                <span className="stat-label">Completed</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="header-actions">
-                        <div className="search-container">
-                            <input
-                                type="text"
-                                placeholder="Search projects..."
-                                className="search-input"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                            {ICONS.search}
-                        </div>
-                        <button className="filter-btn">
-                            {ICONS.filter}
-                            <span>Filter</span>
-                        </button>
-                        <button className="create-btn primary-btn" onClick={handleOpenCreateModal}>
-                            {ICONS.createProject}
-                            <span>New Project</span>
-                        </button>
-                    </div>
+                    <h2 style={{ fontWeight: 700, fontSize: '2rem', margin: 0, color: 'var(--text-primary)' }}>Project Management</h2>
+                    <button className="primary-btn" style={{ minWidth: 160, display: 'flex', alignItems: 'center', gap: 8 }} onClick={handleOpenCreateModal}>
+                        <span className="icon">{ICONS.createProject}</span>
+                        <span>Create Project</span>
+                    </button>
                 </div>
-
-                <div className="management-controls">
-                    <div className="view-tabs">
-                        <button className={`tab-btn ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>
-                            {ICONS.list}
-                            <span>List View</span>
-                        </button>
-                        <button className={`tab-btn ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>
-                            {ICONS.grid}
-                            <span>Card View</span>
-                        </button>
+                <div className="filters-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '1.5rem', alignItems: 'center', margin: '2rem 0 1.5rem 0', background: 'var(--card-bg)', borderRadius: 12, padding: '1.5rem' }}>
+                    <div className="filter-group search-filter">
+                        <input
+                            type="text"
+                            placeholder="Title, description..."
+                            className="search-input"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            style={{ width: '100%' }}
+                        />
                     </div>
-
-                    <div className="filters-quick">
+                    <div className="filter-group">
                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="filter-select">
-                            <option value="All">All Statuses</option>
+                            <option value="All Statuses">All Statuses</option>
                             <option value="Open">Open</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Pending Approval">Pending Approval</option>
                             <option value="Completed">Completed</option>
                             <option value="Archived">Archived</option>
                         </select>
+                    </div>
+                    <div className="filter-group">
                         <select value={clientFilter} onChange={e => setClientFilter(e.target.value)} className="filter-select">
-                            <option value="All">All Clients</option>
+                            <option value="All Clients">All Clients</option>
                             {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
+                    </div>
+                    <div className="filter-group">
+                        <select value={freelancerFilter} onChange={e => setFreelancerFilter(e.target.value)} className="filter-select">
+                            <option value="All Freelancers">All Freelancers</option>
+                            {freelancers.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="filter-group archived-filter" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                            type="checkbox"
+                            id="show-archived"
+                            checked={showArchived}
+                            onChange={e => setShowArchived(e.target.checked)}
+                        />
+                        <label htmlFor="show-archived" style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>Show Archived Projects</label>
                     </div>
                 </div>
 
                 {error && <div className="error-message">{error}</div>}
 
-                {view === 'list' && (
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Project</th>
-                                    <th>Client</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th>Budget</th>
-                                    <th>Deadline</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredProjects.map(p => {
-                                    const isPastDue = new Date(p.deadline) < new Date() && p.status !== 'Completed';
-                                    const progress = Math.min(100, ((parseFloat(p.spend) / parseFloat(p.budget)) * 100));
-
-                                    return (
-                                        <tr key={p.id} className="project-row">
-                                            <td className="project-info">
-                                                <div className="project-title">{p.title}</div>
-                                                <div className="project-freelancer">
-                                                    Assigned to: {p.freelancerName}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="client-name">{p.clientName}</div>
-                                            </td>
-                                            <td>
-                                                <span className={`status-badge ${getStatusColor(p.status)}`}>
-                                                    {p.status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="progress-container">
-                                                    <div className="progress-bar">
-                                                        <div
-                                                            className="progress-fill"
-                                                            style={{ width: `${Math.min(progress, 100)}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <span className="progress-text">{Math.round(progress)}%</span>
-                                                </div>
-                                            </td>
-                                            <td className="budget-info">
-                                                <div className="budget-amount">R {parseFloat(p.budget).toLocaleString()}</div>
-                                                <div className="spent-amount">R {parseFloat(p.spend).toLocaleString()} spent</div>
-                                            </td>
-                                            <td className={isPastDue ? 'deadline-passed' : ''}>
-                                                {new Date(p.deadline).toLocaleDateString()}
-                                            </td>
-                                            <td>
-                                                <div className="action-icons">
-                                                    <button
-                                                        className="action-btn view-btn"
-                                                        onClick={() => handleViewDetails(p)}
-                                                        title="View Details"
-                                                    >
-                                                        {ICONS.view}
-                                                    </button>
-                                                    <button
-                                                        className="action-btn edit-btn"
-                                                        onClick={() => handleOpenEditModal(p)}
-                                                        title="Edit Project"
-                                                    >
-                                                        {ICONS.edit}
-                                                    </button>
-                                                    <button
-                                                        className="action-btn download-btn"
-                                                        onClick={() => handleDownloadProject(p)}
-                                                        title="Download Project Data"
-                                                    >
-                                                        {ICONS.download}
-                                                    </button>
-                                                    <button
-                                                        className="action-btn delete-btn"
-                                                        onClick={() => handleDeleteProject(p.id)}
-                                                        title="Delete Project"
-                                                    >
-                                                        {ICONS.delete}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {view === 'cards' && (
-                    <div className="projects-grid">
-                        {filteredProjects.map(p => {
-                            const isPastDue = new Date(p.deadline) < new Date() && p.status !== 'Completed';
-                            const progress = Math.min(100, ((parseFloat(p.spend) / parseFloat(p.budget)) * 100));
-
-                            return (
-                                <div key={p.id} className="project-card" onClick={() => handleViewDetails(p)}>
-                                    <div className="card-header">
-                                        <div className="card-title-row">
-                                            <h3 className="card-title">{p.title}</h3>
-                                            <span className={`status-badge ${getStatusColor(p.status)}`}>
-                                                {p.status}
-                                            </span>
-                                        </div>
-                                        <div className="card-meta">
-                                            <div className="client-info">
-                                                <span className="label">Client:</span>
-                                                <span className="value">{p.clientName}</span>
+                <div className="table-container">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>TITLE</th>
+                                <th>CLIENT</th>
+                                <th>FREELANCER</th>
+                                <th>STATUS</th>
+                                <th>BUDGET (R)</th>
+                                <th>SPEND (R)</th>
+                                <th>DEADLINE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProjects.map(p => {
+                                const isPastDue = new Date(p.deadline) < new Date() && p.status !== 'Completed';
+                                return (
+                                    <tr key={p.id} className="project-row">
+                                        <td className="project-title">{p.title}</td>
+                                        <td>{p.clientName}</td>
+                                        <td>{p.freelancerName || 'Not Assigned'}</td>
+                                        <td>
+                                            <span className={`status-badge ${getStatusColor(p.status)}`}>{p.status}</span>
+                                        </td>
+                                        <td>R {parseFloat(p.budget).toLocaleString()}</td>
+                                        <td>R {parseFloat(p.spend).toLocaleString()}</td>
+                                        <td className={isPastDue ? 'deadline-passed' : ''} style={isPastDue ? { fontWeight: 700 } : {}}>
+                                            {new Date(p.deadline).toLocaleDateString()}
+                                        </td>
+                                        <td>
+                                            <div className="action-icons">
+                                                <button className="action-btn view-btn" onClick={() => handleViewDetails(p)} title="View Details"><span className="icon">{ICONS.view}</span></button>
+                                                <button className="action-btn edit-btn" onClick={() => handleOpenEditModal(p)} title="Edit Project"><span className="icon">{ICONS.edit}</span></button>
+                                                <button className="action-btn download-btn" onClick={() => handleDownloadProject(p)} title="Download Project Data"><span className="icon">{ICONS.download}</span></button>
+                                                <button className="action-btn delete-btn" onClick={() => handleDeleteProject(p.id)} title="Delete Project"><span className="icon">{ICONS.delete}</span></button>
                                             </div>
-                                            <div className="freelancer-info">
-                                                <span className="label">Assigned to:</span>
-                                                <span className="value">{p.freelancerName}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
 
-                                    <div className="card-content">
-                                        <div className="card-stats">
-                                            <div className="stat-row">
-                                                <div className="stat-item">
-                                                    <span className="stat-label">Budget</span>
-                                                    <span className="stat-value">R {parseFloat(p.budget).toLocaleString()}</span>
-                                                </div>
-                                                <div className="stat-item">
-                                                    <span className="stat-label">Deadline</span>
-                                                    <span className={`stat-value ${isPastDue ? 'overdue' : ''}`}>
-                                                        {new Date(p.deadline).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="progress-section">
-                                            <div className="progress-header">
-                                                <span className="progress-label">Progress</span>
-                                                <span className="progress-percentage">{Math.round(progress)}%</span>
-                                            </div>
-                                            <div className="progress-bar">
-                                                <div
-                                                    className="progress-fill"
-                                                    style={{ width: `${Math.min(progress, 100)}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="card-actions">
-                                        <button
-                                            className="action-btn secondary-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenEditModal(p);
-                                            }}
-                                        >
-                                            {ICONS.edit}
-                                            <span>Edit</span>
-                                        </button>
-                                        <button
-                                            className="action-btn primary-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleViewDetails(p);
-                                            }}
-                                        >
-                                            {ICONS.view}
-                                            <span>View Details</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                {isModalOpen && (
+                    <ProjectForm
+                        project={editingProject}
+                        onSave={handleSaveProject}
+                        onCancel={() => setIsModalOpen(false)}
+                        clients={clients}
+                        freelancers={freelancers}
+                    />
                 )}
             </div>
-
-            {isModalOpen && (
-                <ProjectForm
-                    project={editingProject}
-                    onSave={handleSaveProject}
-                    onCancel={() => setIsModalOpen(false)}
-                    clients={clients}
-                    freelancers={freelancers}
-                />
-            )}
         </>
     );
 };

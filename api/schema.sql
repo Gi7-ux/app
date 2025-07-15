@@ -129,7 +129,6 @@ CREATE TABLE IF NOT EXISTS tickets (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE -- If user is deleted, their tickets are also deleted
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
--- PROJECT MESSAGES TABLE (Legacy table for backward compatibility)
 CREATE TABLE IF NOT EXISTS `project_messages` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `project_id` INT NOT NULL,
@@ -138,4 +137,49 @@ CREATE TABLE IF NOT EXISTS `project_messages` (
     `type` VARCHAR(50) DEFAULT 'project_communication',
     `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- TIME LOGS TABLE
+CREATE TABLE IF NOT EXISTS `time_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT NOT NULL,
+    `freelancer_id` INT NOT NULL,
+    `client_id` INT NOT NULL,
+    `hours_logged` DECIMAL(5, 2) NOT NULL,
+    `date` DATE NOT NULL,
+    `description` TEXT,
+    `status` VARCHAR(50) DEFAULT 'approved',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `purchased_hours` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT NOT NULL,
+    `client_id` INT NOT NULL,
+    `hours_purchased` DECIMAL(5, 2) NOT NULL,
+    `purchase_date` DATE NOT NULL,
+    `amount` DECIMAL(10, 2) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- CHARGES TABLE
+CREATE TABLE IF NOT EXISTS `charges` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `time_log_id` INT NOT NULL,
+    `project_id` INT NOT NULL,
+    `client_id` INT NOT NULL,
+    `freelancer_id` INT NOT NULL,
+    `hours_logged` DECIMAL(5, 2) NOT NULL,
+    `rate` DECIMAL(10, 2) NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`time_log_id`) REFERENCES `time_logs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

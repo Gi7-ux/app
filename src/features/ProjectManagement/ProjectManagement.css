@@ -374,6 +374,45 @@
     transform: translateY(-1px);
 }
 
+.icon {
+    width: 1.6em;
+    height: 1.6em;
+    vertical-align: middle;
+    stroke: var(--primary-color, #2d7cf7);
+    fill: none;
+    transition: stroke 0.2s, transform 0.2s;
+    display: inline-block;
+}
+
+.action-btn .icon {
+    margin-right: 0.25em;
+}
+
+.action-btn:hover .icon {
+    stroke: var(--accent-color, #1abc9c);
+    transform: scale(1.15);
+}
+
+.delete-btn .icon {
+    stroke: var(--card-red-icon, #e74c3c);
+}
+
+.edit-btn .icon {
+    stroke: var(--card-yellow-icon, #f1c40f);
+}
+
+.download-btn .icon {
+    stroke: var(--card-green-icon, #27ae60);
+}
+
+.view-btn .icon {
+    stroke: var(--primary-color, #2d7cf7);
+}
+
+.create-btn .icon {
+    stroke: var(--accent-color, #1abc9c);
+}
+
 /* --- Status Badges --- */
 .status-badge {
     padding: 0.375rem 0.75rem;

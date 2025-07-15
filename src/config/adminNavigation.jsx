@@ -5,6 +5,7 @@ import { ProjectManagement } from '../features/ProjectManagement/ProjectManageme
 import { Billing } from '../features/Billing/Billing.jsx';
 import { TimeReports } from '../features/TimeReports/TimeReports.jsx';
 import { Profile } from '../features/Profile/Profile.jsx';
+import Settings from '../features/Settings/Settings.jsx';
 import { Messages } from '../features/Messages/Messages.jsx';
 import { Reporting } from '../features/Reporting/Reporting.jsx';
 import BroadcastMessageForm from '../features/Admin/BroadcastMessageForm.jsx'; // Import the new component
@@ -21,4 +22,5 @@ export const NAV_ITEMS = [
     { id: 'reporting', label: 'Reporting', icon: 'reports', component: <Reporting /> },
     { id: 'tickets', label: 'Support Tickets', icon: 'help_outline', component: <TicketsPage /> },
     { id: 'profile', label: 'My Profile', icon: 'profile', component: <Profile /> },
+    { id: 'settings', label: 'Settings', icon: 'settings', component: <Settings /> },
 ];
