@@ -1,59 +1,118 @@
 <?php
 require_once '../core/database.php';
 require_once '../core/utils.php';
+require_once '../core/config.php';
+require_once '../vendor/autoload.php';
+
+use \Firebase\JWT\JWT;
+use \Firebase\JWT\Key;
+
 header("Content-Type: application/json; charset=UTF-8");
 
 $database = new Database();
 $db = $database->connect();
-$user_data = validate_token(); // Capture user data from the token
 
-$project_id = $_GET['project_id'] ?? null;
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+$arr = explode(" ", $authHeader);
+$jwt = $arr[1] ?? '';
 
-if (!is_numeric($project_id)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Invalid project_id. Must be numeric."]);
-    exit();
-}
-
-$project_id = (int)$project_id; // Cast to integer for database query
-
-if (!$project_id) { // Check if after casting, it's still not a valid ID (e.g., 0 or null)
-    http_response_code(400);
-    echo json_encode(["message" => "Missing project_id"]);
-    exit();
-}
-
-// Permission check: Verify if the user is authorized to access this project's messages
-// This assumes a 'projects' table with an 'owner_id' and/or a 'project_members' table
-// For simplicity, let's assume a 'projects' table with an 'owner_id' and a 'project_members' table
-// You might need to adjust this query based on your actual database schema.
-
-$auth_query = "SELECT COUNT(*) FROM projects p
-               LEFT JOIN project_members pm ON p.id = pm.project_id
-               WHERE p.id = :project_id
-               AND (p.owner_id = :user_id OR pm.user_id = :user_id)";
-
-$auth_stmt = $db->prepare($auth_query);
-$auth_stmt->bindParam(':project_id', $project_id);
-$auth_stmt->bindParam(':user_id', $user_data->id);
-$auth_stmt->execute();
-$is_authorized = $auth_stmt->fetchColumn();
-
-if (!$is_authorized) {
-    http_response_code(403); // Forbidden
-    echo json_encode(["message" => "You are not authorized to access messages for this project."]);
+if (!$jwt) {
+    http_response_code(401);
+    echo json_encode(["message" => "Unauthorized: No token provided."]);
     exit();
 }
 
 try {
-    $stmt = $db->prepare("SELECT * FROM project_messages WHERE project_id = :project_id ORDER BY timestamp ASC");
+    $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
+    $user_id = $decoded->data->id;
+    $user_role = $decoded->data->role;
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode([
+        "message" => "Unauthorized: Invalid token.",
+        "error" => $e->getMessage()
+    ]);
+    exit();
+}
+
+$project_id = $_GET['project_id'] ?? null;
+$thread_type = $_GET['thread_type'] ?? null;
+
+if (!is_numeric($project_id)) {
+    http_response_code(400);
+    echo json_encode(["message" => "Invalid or missing project_id."]);
+    exit();
+}
+$project_id = (int)$project_id;
+
+$allowed_thread_types = ['project_client_admin_freelancer', 'project_admin_client', 'project_admin_freelancer'];
+if (!$thread_type || !in_array($thread_type, $allowed_thread_types)) {
+    http_response_code(400);
+    echo json_encode(["message" => "A valid thread_type is required."]);
+    exit();
+}
+
+try {
+    // 1. Find the thread_id
+    $stmt = $db->prepare("SELECT id FROM message_threads WHERE project_id = :project_id AND type = :type");
     $stmt->bindParam(':project_id', $project_id);
+    $stmt->bindParam(':type', $thread_type);
+    $stmt->execute();
+    $thread_id = $stmt->fetchColumn();
+
+    if (!$thread_id) {
+        // No thread found, return empty array. It will be created on first message.
+        echo json_encode([]);
+        exit();
+    }
+
+    // 2. Verify user is a participant of the thread
+    $part_stmt = $db->prepare("SELECT COUNT(*) FROM message_thread_participants WHERE thread_id = :thread_id AND user_id = :user_id");
+    $part_stmt->bindParam(':thread_id', $thread_id);
+    $part_stmt->bindParam(':user_id', $user_id);
+    $part_stmt->execute();
+    if ($part_stmt->fetchColumn() == 0) {
+        http_response_code(403);
+        echo json_encode(["message" => "Forbidden: You are not a participant of this message thread."]);
+        exit();
+    }
+
+    // 3. Construct the query with visibility rules
+    $sql = "SELECT m.id, m.thread_id, m.sender_id, u.name as sender_name, u.role as sender_role, m.text, m.status, m.created_at
+            FROM messages m
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.thread_id = :thread_id";
+
+    // Visibility logic based on the user's role
+    if ($user_role === 'client') {
+        // Clients only see 'approved' messages
+        $sql .= " AND m.status = 'approved'";
+    } elseif ($user_role === 'freelancer') {
+        // Freelancers see their own messages regardless of status, but only 'approved' messages from others.
+        $sql .= " AND (m.status = 'approved' OR m.sender_id = :user_id)";
+    }
+    // Admins can see all messages (no additional status filter needed)
+
+    $sql .= " ORDER BY m.created_at ASC";
+
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(':thread_id', $thread_id);
+    if ($user_role === 'freelancer') {
+        $stmt->bindParam(':user_id', $user_id);
+    }
+
     $stmt->execute();
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode($messages);
+
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(["message" => "Database error: " . $e->getMessage()]);
-    exit();
+    error_log("Get project messages failed: " . $e->getMessage());
+    echo json_encode(["message" => "Database error.", "error" => $e->getMessage()]);
+} catch (Exception $e) {
+    http_response_code(500);
+    error_log("Get project messages failed: " . $e->getMessage());
+    echo json_encode(["message" => "An unexpected error occurred.", "error" => $e->getMessage()]);
 }
 ?>
