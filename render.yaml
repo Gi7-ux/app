@@ -4,7 +4,7 @@ services:
     runtime: static
     rootDir: src
     buildCommand: yarn; yarn build
-    staticPublishPath: ../dist
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
