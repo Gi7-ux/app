@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ICONS } from '../../../assets/icons.jsx';
-import { AssignmentsTab } from './tabs/AssignmentsTab.jsx';
-import { FilesTab } from './tabs/FilesTab.jsx';
-import { MessagesTab } from './tabs/MessagesTab.jsx';
-import { ProjectDetailsOverview } from './tabs/ProjectDetailsOverview.jsx';
-import { FreelancersTab } from './tabs/FreelancersTab.jsx';
-import { TimeLogsTab } from './tabs/TimeLogsTab.jsx';
-import JobCard from './JobCard.jsx';
+import { ICONS } from '../../../assets/icons';
+import { AssignmentsTab } from './tabs/AssignmentsTab';
+import { FilesTab } from './tabs/FilesTab';
+import { MessagesTab } from './tabs/MessagesTab';
+import { ProjectDetailsOverview } from './tabs/ProjectDetailsOverview';
+import { FreelancersTab } from './tabs/FreelancersTab';
+import { TimeLogsTab } from './tabs/TimeLogsTab';
+import JobCard from './JobCard';
 
 const getStatusColor = (status) => {
     switch (status) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FreelancerPerformanceReport } from './reports/FreelancerPerformanceReport.jsx';
-import { ProjectStatusReport } from './reports/ProjectStatusReport.jsx';
-import { ClientSummaryReport } from './reports/ClientSummaryReport.jsx';
+import { FreelancerPerformanceReport } from './reports/FreelancerPerformanceReport';
+import { ProjectStatusReport } from './reports/ProjectStatusReport';
+import { ClientSummaryReport } from './reports/ClientSummaryReport';
 
 const TABS = [
     { id: 'freelancer', label: 'Freelancer Performance' },
@@ -32,8 +32,8 @@ export const Reporting = () => {
             </div>
             <div className="project-tabs">
                 {TABS.map(tab => (
-                    <button 
-                        key={tab.id} 
+                    <button
+                        key={tab.id}
                         className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
                         onClick={() => setActiveTab(tab.id)}
                     >

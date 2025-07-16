@@ -22,39 +22,45 @@ if ($limit < 1 || $limit > 50) $limit = 5;
 if ($jwt) {
     try {
         $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
-        $user_id = $decoded->data->id;
-        $role = $decoded->data->role;
+        $user_id = $decoded->data->id ?? null;
+        $role = $decoded->data->role ?? null;
+
+        if (!$user_id || !$role) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied. Invalid token payload."]);
+            exit;
+        }
 
         $query = '';
         $params = [];
         if ($role === 'admin') {
-            $query = "SELECT f.id, f.filename, f.path, f.file_size, f.mime_type, f.created_at, u.name as uploaded_by, p.title as project
+            $query = "SELECT f.id, f.name, f.path, f.size, f.type, f.uploaded_at, u.name as uploaded_by, p.title as project
                       FROM files f
-                      JOIN users u ON f.uploaded_by = u.id
+                      JOIN users u ON f.uploader_id = u.id
                       JOIN projects p ON f.project_id = p.id
-                      ORDER BY f.created_at DESC
+                      ORDER BY f.uploaded_at DESC
                       LIMIT :limit";
         } else if ($role === 'client') {
-            $query = "SELECT f.id, f.filename, f.path, f.file_size, f.mime_type, f.created_at, u.name as uploaded_by, p.title as project
+            $query = "SELECT f.id, f.name, f.path, f.size, f.type, f.uploaded_at, u.name as uploaded_by, p.title as project
                       FROM files f
-                      JOIN users u ON f.uploaded_by = u.id
+                      JOIN users u ON f.uploader_id = u.id
                       JOIN projects p ON f.project_id = p.id
                       WHERE p.client_id = :user_id
-                      ORDER BY f.created_at DESC
+                      ORDER BY f.uploaded_at DESC
                       LIMIT :limit";
             $params[':user_id'] = $user_id;
         } else if ($role === 'freelancer') {
-            $query = "SELECT f.id, f.filename, f.path, f.file_size, f.mime_type, f.created_at, u.name as uploaded_by, p.title as project
+            $query = "SELECT f.id, f.name, f.path, f.size, f.type, f.uploaded_at, u.name as uploaded_by, p.title as project
                       FROM files f
-                      JOIN users u ON f.uploaded_by = u.id
+                      JOIN users u ON f.uploader_id = u.id
                       JOIN projects p ON f.project_id = p.id
                       WHERE p.freelancer_id = :user_id
-                      ORDER BY f.created_at DESC
+                      ORDER BY f.uploaded_at DESC
                       LIMIT :limit";
             $params[':user_id'] = $user_id;
         } else {
             http_response_code(403);
-            echo json_encode(["message" => "Access denied."]);
+            echo json_encode(["message" => "Access denied. Invalid role."]);
             exit;
         }
 
@@ -70,7 +76,7 @@ if ($jwt) {
         echo json_encode($files);
     } catch (Exception $e) {
         http_response_code(401);
-        echo json_encode(["message" => "Access denied.", "error" => $e->getMessage()]);
+        echo json_encode(["message" => "Access denied. Invalid or expired token."]);
     }
 } else {
     http_response_code(401);

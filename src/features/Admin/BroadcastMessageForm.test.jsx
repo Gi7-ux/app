@@ -1,4 +1,5 @@
 import React from 'react';
+import { vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import BroadcastMessageForm from './BroadcastMessageForm.jsx'; // Assuming correct path
@@ -76,9 +77,9 @@ describe('BroadcastMessageForm', () => {
 
     test('shows user selector when "Specific Users" scope is selected', async () => {
         fetch.mockResolvedValueOnce({
-             ok: true,
-             status: 200,
-             json: async () => ({ records: mockUsers })
+            ok: true,
+            status: 200,
+            json: async () => ({ records: mockUsers })
         });
         render(<BroadcastMessageForm currentUser={mockCurrentUser} />);
         fireEvent.click(screen.getByLabelText(/specific users/i));

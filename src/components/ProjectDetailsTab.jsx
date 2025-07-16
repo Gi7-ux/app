@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const ProjectDetailsTab = ({ project, formData, handleInputChange, handleSubmit, loading, onClose, onSave }) => {
+const ProjectDetailsTab = ({ project, formData, handleInputChange, handleSubmit, loading, onClose, _onSave }) => {
     return (
         <div className="tab-content-container">
             <form onSubmit={handleSubmit} className="project-details-form">
@@ -122,7 +122,7 @@ ProjectDetailsTab.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     loading: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
-    onSave: PropTypes.func
+    _onSave: PropTypes.func
 };
 
 export default ProjectDetailsTab;

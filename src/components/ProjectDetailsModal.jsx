@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import './ProjectDetailsModal.css';
 import { ICONS } from '../assets/icons';
 import { AuthService } from '../services/AuthService.js';
@@ -136,7 +137,7 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
                                         <strong>{app.freelancerName}</strong> ({app.freelancerHandle})
                                         <span className="bid">Bid: R {app.bid.toLocaleString()}</span>
                                     </div>
-                                    <p>"{app.note}"</p>
+                                    <p>&quot;{app.note}&quot;</p>
                                     <button className="accept-btn" onClick={() => handleAccept(app)}>{ICONS.accept} Accept Application</button>
                                 </div>
                             ))
@@ -152,6 +153,30 @@ const ProjectDetailsModal = ({ project, onClose, onAcceptApplication, onManageTa
             </div>
         </div>
     );
+};
+
+
+ProjectDetailsModal.propTypes = {
+    project: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        title: PropTypes.string,
+        description: PropTypes.string,
+        budget: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        spend: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        deadline: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+        clientName: PropTypes.string,
+        status: PropTypes.string,
+        skills: PropTypes.arrayOf(PropTypes.string),
+        assignments: PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                title: PropTypes.string,
+            })
+        ),
+    }),
+    onClose: PropTypes.func.isRequired,
+    onAcceptApplication: PropTypes.func,
+    onManageTasks: PropTypes.func,
 };
 
 export default ProjectDetailsModal;

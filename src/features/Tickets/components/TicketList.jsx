@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import TicketListItem from './TicketListItem'; // We'll create this next
 import './TicketList.css'; // We'll create this stylesheet
 
@@ -31,6 +32,24 @@ const TicketList = ({ tickets, onTicketSelect, userRole }) => {
             </ul>
         </div>
     );
+};
+
+
+TicketList.propTypes = {
+    tickets: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+            title: PropTypes.string,
+            category: PropTypes.string,
+            status: PropTypes.string,
+            priority: PropTypes.string,
+            updated_at: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+            user_name: PropTypes.string,
+            user_email: PropTypes.string,
+        })
+    ).isRequired,
+    onTicketSelect: PropTypes.func.isRequired,
+    userRole: PropTypes.string.isRequired,
 };
 
 export default TicketList;

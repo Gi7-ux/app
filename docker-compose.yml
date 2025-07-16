@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:80"
+    volumes:
+      - ./api/data:/var/www/html/data
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+    restart: unless-stopped
+  frontend:
+    build: ./src
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped

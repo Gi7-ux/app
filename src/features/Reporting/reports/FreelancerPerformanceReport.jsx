@@ -7,7 +7,7 @@ export const FreelancerPerformanceReport = () => {
     const fetchReportData = async () => {
         setError('');
         try {
-            const { AuthService } = await import('../../services/AuthService.js');
+            const { AuthService } = await import('../../../services/AuthService.js');
             const token = AuthService.getAccessToken();
             if (!AuthService.isAuthenticated()) {
                 await AuthService.logout();

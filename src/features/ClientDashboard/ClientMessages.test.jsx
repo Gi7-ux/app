@@ -15,12 +15,12 @@ vi.mock('../Messages/components/MessagingContainer.jsx', () => {
     </div>
   );
 
-  // MockedMessagingContainer.propTypes = { // Temporarily removed
-  //   currentUser: PropTypes.shape({
-  //     name: PropTypes.string.isRequired,
-  //     role: PropTypes.string.isRequired,
-  //   }).isRequired,
-  // };
+  MockedMessagingContainer.propTypes = {
+    currentUser: require('prop-types').shape({
+      name: require('prop-types').string.isRequired,
+      role: require('prop-types').string.isRequired,
+    }).isRequired,
+  };
 
   return { MessagingContainer: MockedMessagingContainer };
 });

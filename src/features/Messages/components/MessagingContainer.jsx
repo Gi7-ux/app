@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ConversationList } from './ConversationList.jsx';
-import { ChatWindow } from './ChatWindow.jsx';
-import { AdminProjectSelector } from './AdminProjectSelector.jsx';
+import { ConversationList } from './ConversationList';
+import { ChatWindow } from './ChatWindow';
+import { AdminProjectSelector } from './AdminProjectSelector';
 // import { mockData } from '../../../data/data.js'; // Keep for project titles for now - No longer needed for AdminProjectSelector if it fetches real projects
 
 export const MessagingContainer = ({ currentUser, projectId = null }) => { // Added projectId prop

@@ -108,24 +108,22 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
 
             // Fetch recent file uploads for freelancer
             try {
-                const filesResponse = await fetch('/api/files/recent.php?limit=5', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const filesResponse = await AuthService.fetchWithAuth('/api/files/recent.php?limit=5');
                 const filesData = await filesResponse.json();
-                if (filesResponse.ok && Array.isArray(filesData)) {
+                if (filesResponse.ok && Array.isArray(filesData) && filesData.length > 0) {
                     setRecentFileUploads(filesData.map(f => ({
                         id: f.id,
-                        filename: f.filename,
-                        type: f.mime_type && f.mime_type.includes('pdf') ? 'pdf' : (f.mime_type && f.mime_type.includes('image') ? 'image' : (f.mime_type && f.mime_type.includes('dwg') ? 'dwg' : 'file')),
-                        uploaded_by: f.uploaded_by,
-                        project: f.project,
-                        date: f.created_at ? new Date(f.created_at).toLocaleDateString() : ''
+                        filename: f.name || f.filename || 'Unknown',
+                        type: f.type && f.type.includes('pdf') ? 'pdf' : (f.type && f.type.includes('image') ? 'image' : (f.type && f.type.includes('dwg') ? 'dwg' : 'file')),
+                        uploaded_by: f.uploaded_by || f.uploader || f.uploader_id || 'Unknown',
+                        project: f.project || f.project_title || 'Unknown',
+                        date: f.uploaded_at ? new Date(f.uploaded_at).toLocaleDateString() : ''
                     })));
                 } else {
-                    setRecentFileUploads([]);
+                    setRecentFileUploads(null);
                 }
-            } catch (err) {
-                setRecentFileUploads([]);
+            } catch {
+                setRecentFileUploads(null);
             }
         } catch (err) {
             setError('An error occurred while fetching dashboard data: ' + err.message);
@@ -206,24 +204,28 @@ export const FreelancerOverview = ({ setCurrentPage }) => {
 
             <div className="card" style={{ marginTop: '1.5rem' }}>
                 <h3 className="card-header">Recent File Uploads</h3>
-                <ul className="upload-list">
-                    {recentFileUploads.map((file, index) => (
-                        <li key={file.id || `file-${index}`} className="upload-item">
-                            <div className="file-icon">
-                                {file.type === 'pdf' && ICONS.filePdf}
-                                {file.type === 'image' && ICONS.fileImage}
-                                {file.type === 'dwg' && ICONS.fileDocument}
-                            </div>
-                            <div className="file-info">
-                                <p>{file.filename}</p>
-                                <div className="details">
-                                    Uploaded by {file.uploaded_by} to project {file.project}
+                {Array.isArray(recentFileUploads) && recentFileUploads.length > 0 ? (
+                    <ul className="upload-list">
+                        {recentFileUploads.map((file, index) => (
+                            <li key={file.id || `file-${index}`} className="upload-item">
+                                <div className="file-icon">
+                                    {file.type === 'pdf' && ICONS.filePdf}
+                                    {file.type === 'image' && ICONS.fileImage}
+                                    {file.type === 'dwg' && ICONS.fileDocument}
                                 </div>
-                            </div>
-                            <div className="file-date">{file.date}</div>
-                        </li>
-                    ))}
-                </ul>
+                                <div className="file-info">
+                                    <p>{file.filename}</p>
+                                    <div className="details">
+                                        Uploaded by {file.uploaded_by} to project {file.project}
+                                    </div>
+                                </div>
+                                <div className="file-date">{file.date}</div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p style={{ padding: '1rem' }}>No recent file uploads found.</p>
+                )}
             </div>
 
             <div className="quick-actions" style={{ marginTop: '1.5rem' }}>

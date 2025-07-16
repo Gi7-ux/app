@@ -50,9 +50,7 @@ export const ClientOverview = ({ setCurrentPage }) => {
         }
         // Fetch recent file uploads for client
         try {
-            const filesResponse = await fetch('/api/files/recent.php?limit=5', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const filesResponse = await AuthService.fetchWithAuth('/api/files/recent.php?limit=5');
             const filesData = await filesResponse.json();
             if (filesResponse.ok && Array.isArray(filesData)) {
                 setRecentFileUploads(filesData.map(f => ({

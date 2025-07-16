@@ -1,4 +1,5 @@
 import React from 'react';
+import { vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { BrowserRouter } from 'react-router-dom';
@@ -25,6 +26,7 @@ export const mockUser = {
 };
 
 // All providers wrapper for testing
+import PropTypes from 'prop-types';
 const AllTheProviders = ({ children }) => {
     return (
         <BrowserRouter>
@@ -33,6 +35,10 @@ const AllTheProviders = ({ children }) => {
             </ThemeProvider>
         </BrowserRouter>
     );
+};
+
+AllTheProviders.propTypes = {
+    children: PropTypes.node.isRequired,
 };
 
 // Custom render function that includes providers

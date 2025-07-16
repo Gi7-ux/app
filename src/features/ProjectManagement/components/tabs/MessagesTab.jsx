@@ -13,7 +13,7 @@ export const MessagesTab = ({ project }) => {
             setLoadingUser(true);
             setErrorUser('');
             try {
-                const { AuthService } = await import('../../../services/AuthService.js');
+                const { AuthService } = await import('../../../../services/AuthService.js');
                 const token = AuthService.getAccessToken();
                 if (!AuthService.isAuthenticated()) {
                     await AuthService.logout();

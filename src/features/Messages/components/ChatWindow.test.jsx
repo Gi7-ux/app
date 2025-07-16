@@ -1,5 +1,4 @@
 import React from 'react';
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChatWindow } from './ChatWindow';
@@ -11,7 +10,6 @@ beforeEach(() => {
 
 const currentUser = { id: 'user1', email: 'user@test.com', role: 'client', name: 'Current User' };
 const adminUser = { id: 'admin1', email: 'admin@test.com', role: 'admin', name: 'Admin User' };
-const adminUser = { email: 'admin@test.com', role: 'admin' };
 
 const mockThread = { id: 'thread1', type: 'project_client_admin_freelancer' };
 
@@ -35,20 +33,20 @@ vi.mock('../../../data/data.js', () => ({
 
 describe('ChatWindow', () => {
   it('renders a message to select a conversation if no thread is provided', () => {
-    render(<ChatWindow thread={null} messages={[]} currentUser={currentUser} onSendMessage={() => {}} onModerateMessage={() => {}} />);
+    render(<ChatWindow thread={null} messages={[]} currentUser={currentUser} onSendMessage={() => { }} onModerateMessage={() => { }} />);
     expect(screen.getByText('Select a conversation or project to start messaging.')).toBeInTheDocument();
   });
 
   it('renders messages for the active thread', () => {
-    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={currentUser} onSendMessage={() => {}} onModerateMessage={() => {}} />);
-    
+    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={currentUser} onSendMessage={() => { }} onModerateMessage={() => { }} />);
+
     expect(screen.getByText('Hello from them')).toBeInTheDocument();
     expect(screen.getByText('Hello from me')).toBeInTheDocument();
   });
 
   it('calls onSendMessage when the send button is clicked', () => {
     const onSendMessageMock = vi.fn();
-    render(<ChatWindow thread={mockThread} messages={[]} currentUser={currentUser} onSendMessage={onSendMessageMock} onModerateMessage={() => {}} />);
+    render(<ChatWindow thread={mockThread} messages={[]} currentUser={currentUser} onSendMessage={onSendMessageMock} onModerateMessage={() => { }} />);
 
     const input = screen.getByPlaceholderText('Type a message...');
     const sendButton = screen.getByRole('button', { name: 'Send' });
@@ -61,11 +59,11 @@ describe('ChatWindow', () => {
   });
 
   it('shows moderation buttons for admin on pending messages', () => {
-    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={adminUser} onSendMessage={() => {}} onModerateMessage={() => {}} />);
-    
+    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={adminUser} onSendMessage={() => { }} onModerateMessage={() => { }} />);
+
     // Admin sees all messages, including pending
     expect(screen.getByText('This is pending')).toBeInTheDocument();
-    
+
     // Admin sees moderation buttons for the pending message
     expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument();
@@ -73,7 +71,7 @@ describe('ChatWindow', () => {
 
   it('calls onModerateMessage when an admin approves or rejects a message', () => {
     const onModerateMessageMock = vi.fn();
-    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={adminUser} onSendMessage={() => {}} onModerateMessage={onModerateMessageMock} />);
+    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={adminUser} onSendMessage={() => { }} onModerateMessage={onModerateMessageMock} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     expect(onModerateMessageMock).toHaveBeenCalledWith(mockThread.id, 'msg3', 'approved');
@@ -83,8 +81,8 @@ describe('ChatWindow', () => {
   });
 
   it('does not show unapproved messages to non-admin users (except their own)', () => {
-    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={currentUser} onSendMessage={() => {}} onModerateMessage={() => {}} />);
-    
+    render(<ChatWindow thread={mockThread} messages={mockMessages} currentUser={currentUser} onSendMessage={() => { }} onModerateMessage={() => { }} />);
+
     // The user should see their own pending message
     expect(screen.getByText('This is pending')).toBeInTheDocument();
     // And they should see its status

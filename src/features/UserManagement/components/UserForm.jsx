@@ -9,17 +9,18 @@ export const UserForm = ({ user, onSave, onCancel }) => {
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        role: user?.role || 'freelancer',
         company: user?.company || '',
-        rate: user?.rate || null,
+        bio: user?.bio || '',
+        role: user?.role || 'freelancer',
         skills: user?.skills || [],
         password: '', // Only used for new user
         avatar: user?.avatar || null,
     });
     const [feedback, setFeedback] = useState({ type: '', message: '' });
 
-    // Use a separate state for the skills input string
-    const [skillsInput, setSkillsInput] = useState(user?.skills?.join(', ') || '');
+    // Use a separate state for the skills tag input
+    const [skillsInput, setSkillsInput] = useState('');
+    const [skillsList, setSkillsList] = useState(user?.skills || []);
 
     // Image editing states
     const [showImageEditor, setShowImageEditor] = useState(false);
@@ -44,19 +45,31 @@ export const UserForm = ({ user, onSave, onCancel }) => {
             case 'phone':
             case 'company':
             case 'password':
+            case 'bio':
                 setFormData(prev => ({ ...prev, [name]: value }));
                 break;
             case 'role':
                 setFormData(prev => ({ ...prev, role: value }));
                 break;
-            case 'rate':
-                setFormData(prev => ({ ...prev, rate: value ? Number(value) : null }));
-                break;
         }
     };
 
+
     const handleSkillsChange = (e) => {
         setSkillsInput(e.target.value);
+    };
+
+    const handleAddSkill = (e) => {
+        e.preventDefault();
+        const skill = skillsInput.trim();
+        if (skill && !skillsList.includes(skill)) {
+            setSkillsList(prev => [...prev, skill]);
+            setSkillsInput('');
+        }
+    };
+
+    const handleRemoveSkill = (skill) => {
+        setSkillsList(prev => prev.filter(s => s !== skill));
     };
 
     const handleImageSelect = (e) => {
@@ -141,11 +154,10 @@ export const UserForm = ({ user, onSave, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const skillsArray = skillsInput.split(',').map(s => s.trim()).filter(Boolean);
         // Only include password if creating a new user
         const submitData = user
-            ? { ...formData, skills: skillsArray }
-            : { ...formData, skills: skillsArray, password: formData.password };
+            ? { ...formData, skills: skillsList }
+            : { ...formData, skills: skillsList, password: formData.password };
         if (!user && !formData.password) {
             alert('Password is required for new users.');
             return;
@@ -162,7 +174,7 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                     <input type="text" name="username" value={formData.email} autoComplete="username" style={{ display: 'none' }} readOnly />
 
                     <div className="modal-header">
-                        <h2>{user ? 'Edit User Profile' : 'Add New User'}</h2>
+                        <h2>{user ? 'Edit User' : 'Create User'}</h2>
                         <button type="button" className="close-btn" onClick={onCancel}>&times;</button>
                     </div>
 
@@ -239,11 +251,11 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                         <div className="user-info-section">
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label htmlFor="name">Full Name</label>
+                                    <label htmlFor="name">Name</label>
                                     <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="email">Email Address</label>
+                                    <label htmlFor="email">Email</label>
                                     <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required disabled={!!user} />
                                 </div>
                             </div>
@@ -254,6 +266,20 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                                     <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} />
                                 </div>
                                 <div className="form-group">
+                                    <label htmlFor="company">Company</label>
+                                    <input type="text" id="company" name="company" value={formData.company} onChange={handleChange} />
+                                </div>
+                            </div>
+
+                            <div className="form-row full-width">
+                                <div className="form-group">
+                                    <label htmlFor="bio">Experience / Bio</label>
+                                    <textarea id="bio" name="bio" value={formData.bio} onChange={handleChange} rows={3} placeholder="Enter experience or bio..." />
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
                                     <label htmlFor="role">Role</label>
                                     <select id="role" name="role" value={formData.role} onChange={handleChange}>
                                         <option value="admin">Admin</option>
@@ -261,33 +287,32 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                                         <option value="client">Client</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label htmlFor="company">Company</label>
-                                    <input type="text" id="company" name="company" value={formData.company} onChange={handleChange} />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="rate">Rate (R/hr)</label>
-                                    <input type="number" id="rate" name="rate" value={formData.rate ?? ''} onChange={handleChange} placeholder="e.g., 700" />
-                                </div>
-                            </div>
-
-                            {!user && (
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label htmlFor="password">Password</label>
-                                        <input type="password" id="password" name="password" value={formData.password} onChange={handleChange} required autoComplete="new-password" />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="form-row full-width">
                                 <div className="form-group">
                                     <label htmlFor="skills">Skills</label>
-                                    <input type="text" id="skills" name="skills" value={skillsInput} onChange={handleSkillsChange} placeholder="e.g., React, Node.js, Design" />
-                                    <p className="skills-info">Separate skills with a comma.</p>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            id="skills"
+                                            name="skills"
+                                            value={skillsInput}
+                                            onChange={handleSkillsChange}
+                                            placeholder="Type skill and press Enter"
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    handleAddSkill(e);
+                                                }
+                                            }}
+                                        />
+                                        <button onClick={handleAddSkill} style={{ minWidth: 50 }} type="button">Add</button>
+                                    </div>
+                                    <div className="skills-tag-list" style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                        {skillsList.map(skill => (
+                                            <span key={skill} className="skill-tag" style={{ background: '#e5e7eb', borderRadius: 12, padding: '2px 10px', display: 'flex', alignItems: 'center', marginRight: 4 }}>
+                                                {skill}
+                                                <button type="button" onClick={() => handleRemoveSkill(skill)} style={{ marginLeft: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', fontWeight: 'bold' }}>×</button>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -296,7 +321,7 @@ export const UserForm = ({ user, onSave, onCancel }) => {
                     <div className="modal-footer">
                         <button type="button" className="modal-btn btn-cancel" onClick={onCancel}>Cancel</button>
                         <button type="submit" className="modal-btn btn-save">
-                            {user ? 'Save Changes' : 'Create User'}
+                            {user ? 'Save User' : 'Save User'}
                         </button>
                     </div>
                 </form>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import TicketsPage from './TicketsPage';
 import { ticketApi } from './ticketApi';
 import { AuthService } from '../../services/AuthService';
@@ -39,7 +40,7 @@ describe('TicketsPage', () => {
 
     it('displays "Loading tickets..." initially', () => {
         // Prevent immediate resolution of getTickets
-        ticketApi.getTickets.mockImplementation(()_ => new Promise(() => {}));
+        ticketApi.getTickets.mockImplementation(() => new Promise(() => { }));
         render(<TicketsPage />);
         expect(screen.getByText('Loading tickets...')).toBeInTheDocument();
     });
@@ -91,7 +92,7 @@ describe('TicketsPage', () => {
         // Check if the form (or a placeholder for it) is visible.
         // CreateTicketForm itself would have a more specific element, e.g., a heading.
         // Our CreateTicketForm has "Create New Support Ticket" h3
-        expect(screen.getByRole('heading', { name: /Create New Support Ticket/i})).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Create New Support Ticket/i })).toBeInTheDocument();
     });
 
     // Need to import userEvent for the test above
@@ -105,13 +106,4 @@ describe('TicketsPage', () => {
 // import userEvent from '@testing-library/user-event'; // Placeholder
 // The test 'shows CreateTicketForm...' might need adjustment based on actual setup.
 
-// A simple way to ensure userEvent is available for the test above:
-// Add this at the top of the file for this test run, if not globally configured.
-import userEvent from '@testing-library/user-event';
-vi.mock('@testing-library/user-event', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    // setup: vi.fn().mockImplementation(actual.setup), // if you use setup
-  };
-});
+// userEvent is imported above for use in tests.

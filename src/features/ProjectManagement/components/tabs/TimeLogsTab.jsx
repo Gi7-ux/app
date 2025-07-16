@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../../../../assets/icons.jsx';
 
-export const TimeLogsTab = ({ project, onUpdateProject }) => {
+export const TimeLogsTab = ({ project, _onUpdateProject }) => {
     const [timeLogs, setTimeLogs] = useState([]);
     const [isAddingTimeLog, setIsAddingTimeLog] = useState(false);
     const [newTimeLog, setNewTimeLog] = useState({
@@ -172,5 +172,5 @@ export const TimeLogsTab = ({ project, onUpdateProject }) => {
 
 TimeLogsTab.propTypes = {
     project: PropTypes.object.isRequired,
-    onUpdateProject: PropTypes.func
+    _onUpdateProject: PropTypes.func
 };

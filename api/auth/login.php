@@ -131,6 +131,7 @@ if ($num > 0) {
             array(
                 "message" => "Login successful.",
                 "access_token" => $access_token,
+                "refresh_token" => $refresh_token_value,
                 "email" => $email,
                 "role" => $role,
                 "expires_at" => $expire_claim

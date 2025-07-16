@@ -129,8 +129,12 @@ const Dashboard = ({ userRole, onLogout }) => {
         return <div>Loading...</div>;
     }
 
-    // Clone the component and pass props
-    const pageComponent = React.cloneElement(activeItem.component, { setCurrentPage });
+    let pageComponent = null;
+    if (activeItem && activeItem.component) {
+        pageComponent = React.cloneElement(activeItem.component, { setCurrentPage });
+    } else {
+        pageComponent = <div style={{ color: 'red', padding: '2rem' }}>This page is not available.</div>;
+    }
 
     return (
         <div className="app-shell">

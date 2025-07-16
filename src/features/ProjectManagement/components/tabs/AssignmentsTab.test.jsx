@@ -25,8 +25,7 @@ vi.mock('../../../data/data.js', () => ({
     userManagement: {
       users: [{ name: 'Alice', role: 'freelancer' }, { name: 'Bob', role: 'freelancer' }],
     },
-  // This mock is no longer directly used by the component as it fetches.
-  // It can be used as a base for fetch mock responses if desired.
+  }
 }));
 
 // Mock global fetch
@@ -72,7 +71,7 @@ describe('AssignmentsTab', () => {
 
     // Mock for the saveAssignment call (POST) and subsequent refetch (GET)
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'Save successful' }) }) // POST
-         .mockResolvedValueOnce({ ok: true, json: async () => (mockProject.assignments) }); // GET for refetch
+      .mockResolvedValueOnce({ ok: true, json: async () => (mockProject.assignments) }); // GET for refetch
 
     const descriptionInput = screen.getByDisplayValue('Draw floor plan');
     fireEvent.change(descriptionInput, { target: { value: 'Draw updated floor plan' } });
@@ -96,7 +95,7 @@ describe('AssignmentsTab', () => {
     });
 
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'Save successful' }) }) // POST
-         .mockResolvedValueOnce({ ok: true, json: async () => ([...mockProject.assignments, {title: "Schematics", tasks: [{description: 'New Task From Prompt'}]}]) }); // GET for refetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ([...mockProject.assignments, { title: "Schematics", tasks: [{ description: 'New Task From Prompt' }] }]) }); // GET for refetch
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Add Task' })[0]);
 
@@ -115,7 +114,7 @@ describe('AssignmentsTab', () => {
     });
 
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'Save successful' }) }) // POST
-         .mockResolvedValueOnce({ ok: true, json: async () => ([{...mockProject.assignments[0], tasks: [mockProject.assignments[0].tasks[1]] }]) }); // GET for refetch (task1 removed)
+      .mockResolvedValueOnce({ ok: true, json: async () => ([{ ...mockProject.assignments[0], tasks: [mockProject.assignments[0].tasks[1]] }]) }); // GET for refetch (task1 removed)
 
 
     const deleteIcons = screen.getAllByText((content, element) => element.tagName.toLowerCase() === 'span' && element.classList.contains('delete-icon'));
@@ -138,7 +137,7 @@ describe('AssignmentsTab', () => {
     });
 
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'Save successful', id: 'newAsgId' }) }) // POST
-         .mockResolvedValueOnce({ ok: true, json: async () => ([...mockProject.assignments, {id: 'newAsgId', title: 'New Assignment Title', tasks: []}]) }); // GET for refetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ([...mockProject.assignments, { id: 'newAsgId', title: 'New Assignment Title', tasks: [] }]) }); // GET for refetch
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Assignment' }));
 

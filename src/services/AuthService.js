@@ -2,12 +2,42 @@
 import { jwtDecode } from "jwt-decode";
 
 const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_ROLE_KEY = "user_role";
 
 export class AuthService {
+    /**
+     * Wrapper for fetch that automatically refreshes token on 401 and retries once.
+     * @param {string} url
+     * @param {object} options
+     * @returns {Promise<Response>}
+     */
+    static async fetchWithAuth(url, options = {}) {
+        let token = this.getAccessToken();
+        if (!options.headers) {
+            options.headers = {};
+        }
+        options.headers['Authorization'] = `Bearer ${token}`;
+        let response = await fetch(url, options);
+        if (response.status === 401) {
+            try {
+                token = await this.refreshToken();
+                options.headers['Authorization'] = `Bearer ${token}`;
+                response = await fetch(url, options);
+            } catch (err) {
+                // If refresh fails, logout and propagate error
+                await this.logout();
+                throw err;
+            }
+        }
+        return response;
+    }
     static login(accessToken, refreshToken, role) {
-        // Store access token in localStorage for persistence across page reloads
+        // Store access and refresh tokens in localStorage for persistence across page reloads
         localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        if (refreshToken) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+        }
         localStorage.setItem(USER_ROLE_KEY, role);
     }
 
@@ -31,8 +61,7 @@ export class AuthService {
     }
 
     static getRefreshToken() {
-        // Refresh token is now HttpOnly, so it's not accessible via JavaScript
-        return null;
+        return localStorage.getItem(REFRESH_TOKEN_KEY);
     }
 
     static isAuthenticated() {
@@ -54,6 +83,7 @@ export class AuthService {
         // Clear tokens from localStorage
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         localStorage.removeItem(USER_ROLE_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
 
         // Call backend endpoint to invalidate the refresh token on the server
         try {
@@ -73,21 +103,22 @@ export class AuthService {
     }
 
     static async refreshToken() {
-        // No need to get currentRefreshToken from client-side storage as it's HttpOnly
-        // The browser will automatically send the HttpOnly refresh token cookie with the request
-
+        const refreshToken = this.getRefreshToken();
+        if (!refreshToken) {
+            throw new Error("Refresh token is required.");
+        }
         try {
             const response = await fetch("/api/auth/refresh.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                // No need to send refresh_token in body, as it's in HttpOnly cookie
+                body: JSON.stringify({ refresh_token: refreshToken })
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // Backend should return new access token and set new refresh token as HttpOnly cookie
-                this.login(data.access_token, null, data.role); // Pass null for refresh token as it's not returned to client
+                // Backend should return new access token and new refresh token
+                this.login(data.access_token, data.refresh_token, data.role);
                 return data.access_token;
             } else {
                 // If refresh fails (e.g. token revoked, expired), logout user

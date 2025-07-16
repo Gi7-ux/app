@@ -116,7 +116,7 @@ export const LoginScreen = ({ onLogin }) => {
                     </button>
 
                     <p className="signup-link">
-                        Don&apos;t have an account? <a href="/signup">Sign up</a>
+                        Don&apos;t have an account? <a href="/register">Sign up</a>
                     </p>
                 </form>
             </div>

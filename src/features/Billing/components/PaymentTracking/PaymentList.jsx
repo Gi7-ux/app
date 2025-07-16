@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { apiClient } from '../../../../api/apiClient'; // Assuming apiClient is setup for API calls
 import './PaymentList.css'; // We'll create this CSS file next
 
 const PAYMENT_STATUS_OPTIONS = ['pending', 'completed', 'failed', 'refunded'];
-const PAYMENT_METHOD_OPTIONS = ['credit_card', 'bank_transfer', 'paypal', 'other'];
 
 
 export const PaymentList = ({ projectId, clientId, freelancerId, showAdminControls }) => {
@@ -93,8 +93,12 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
     };
 
 
-    if (loading) return <p>Loading payments...</p>;
-    if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+    if (loading) {
+        return <p>Loading payments...</p>;
+    }
+    if (error) {
+        return <p style={{ color: 'red' }}>Error: {error}</p>;
+    }
 
     return (
         <div className="payment-list-container">
@@ -147,7 +151,7 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
                                     <td>{payment.id}</td>
                                     <td>{new Date(payment.payment_date).toLocaleDateString()}</td>
                                     <td>${parseFloat(payment.amount).toFixed(2)}</td>
-                                    <td>{payment.project_title || (payment.project_id ? `ID: ${payment.project_id}`: 'N/A')}</td>
+                                    <td>{payment.project_title || (payment.project_id ? `ID: ${payment.project_id}` : 'N/A')}</td>
                                     <td>{payment.paid_by_user_name || (payment.paid_by_user_id ? `ID: ${payment.paid_by_user_id}` : 'N/A')}</td>
                                     <td>{payment.paid_to_user_name || (payment.paid_to_user_id ? `ID: ${payment.paid_to_user_id}` : 'N/A')}</td>
                                     <td>{payment.payment_method}</td>
@@ -185,6 +189,13 @@ export const PaymentList = ({ projectId, clientId, freelancerId, showAdminContro
 };
 
 // Default props can be added if needed, e.g. for showAdminControls
+PaymentList.propTypes = {
+    projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    clientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    freelancerId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    showAdminControls: PropTypes.bool,
+};
+
 PaymentList.defaultProps = {
-    showAdminControls: false, // False by default, should be true if an admin is viewing
+    showAdminControls: false,
 };

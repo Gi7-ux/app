@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS } from '../../../../assets/icons.jsx';
 import { getApiUrl, API_ENDPOINTS } from '../../../../config/api.js';
+import { AuthService } from '../../../../services/AuthService.js';
 
 const formatBytes = (bytes, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
@@ -20,11 +21,8 @@ export const FilesTab = ({ project }) => {
     const fetchFiles = async () => {
         setError('');
         try {
-            const token = localStorage.getItem('access_token');
             const url = getApiUrl(API_ENDPOINTS.FILES.GET, { project_id: project.id });
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await AuthService.fetchWithAuth(url);
             const data = await response.json();
             if (response.ok) {
                 setFiles(data);
@@ -53,11 +51,9 @@ export const FilesTab = ({ project }) => {
         formData.append('project_id', project.id);
 
         try {
-            const token = localStorage.getItem('access_token');
             const url = getApiUrl(API_ENDPOINTS.FILES.UPLOAD);
-            const response = await fetch(url, {
+            const response = await AuthService.fetchWithAuth(url, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
             const data = await response.json();
@@ -78,11 +74,10 @@ export const FilesTab = ({ project }) => {
     const handleDeleteFile = async (fileId) => {
         if (window.confirm(`Are you sure you want to delete this file?`)) {
             try {
-                const token = localStorage.getItem('access_token');
                 const url = getApiUrl(API_ENDPOINTS.FILES.DELETE);
-                const response = await fetch(url, {
+                const response = await AuthService.fetchWithAuth(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file_id: fileId })
                 });
                 const data = await response.json();

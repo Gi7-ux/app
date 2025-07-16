@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { ticketApi } from '../ticketApi'; // Assuming ticketApi.js is in the parent directory
 import './CreateTicketForm.css'; // We'll create this stylesheet
 
@@ -117,6 +118,13 @@ const CreateTicketForm = ({ onSuccess, onCancel }) => {
             </form>
         </div>
     );
+};
+
+
+
+CreateTicketForm.propTypes = {
+    onSuccess: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
 };
 
 export default CreateTicketForm;

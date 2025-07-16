@@ -50,7 +50,7 @@ const ProjectFilesTab = ({ onClose, projectId, currentUser }) => {
     }, [fetchFiles, projectId]);
 
     const handleFileDownload = async (fileId, fileName) => {
-    const token = AuthService.getAccessToken();
+        const token = AuthService.getAccessToken();
         try {
             const response = await fetch(`${API_URL}/api/files/download_file.php?id=${fileId}`, {
                 headers: {
@@ -112,7 +112,7 @@ const ProjectFilesTab = ({ onClose, projectId, currentUser }) => {
         }
         setIsUploading(true);
         setUploadError(null);
-        const token = getToken();
+        const token = AuthService.getAccessToken();
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('project_id', projectId);

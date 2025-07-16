@@ -5,6 +5,8 @@ import './PaymentForm.css'; // We'll create this CSS file next
 const PAYMENT_STATUS_OPTIONS = ['pending', 'completed', 'failed', 'refunded'];
 const PAYMENT_METHOD_OPTIONS = ['credit_card', 'bank_transfer', 'paypal', 'stripe_charge_id', 'other'];
 
+import PropTypes from 'prop-types';
+
 export const PaymentForm = ({ paymentToEdit, onFormSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
         invoice_id: '',
@@ -92,7 +94,7 @@ export const PaymentForm = ({ paymentToEdit, onFormSubmit, onCancel }) => {
             }
             // Reset form for new entry if not editing
             if (!(paymentToEdit && paymentToEdit.id)) {
-                 setFormData({
+                setFormData({
                     invoice_id: '', project_id: '', paid_by_user_id: '', paid_to_user_id: '',
                     amount: '', payment_date: new Date().toISOString().split('T')[0],
                     payment_method: '', transaction_id: '', status: 'completed', notes: ''
@@ -120,7 +122,7 @@ export const PaymentForm = ({ paymentToEdit, onFormSubmit, onCancel }) => {
                         <label htmlFor="payment_date">Payment Date *</label>
                         <input type="date" id="payment_date" name="payment_date" value={formData.payment_date} onChange={handleChange} required />
                     </div>
-                     <div className="form-group">
+                    <div className="form-group">
                         <label htmlFor="paid_by_user_id">Paid By (User ID) *</label>
                         <input type="number" id="paid_by_user_id" name="paid_by_user_id" value={formData.paid_by_user_id} onChange={handleChange} required placeholder="Client's User ID" />
                     </div>
@@ -167,4 +169,22 @@ export const PaymentForm = ({ paymentToEdit, onFormSubmit, onCancel }) => {
             </form>
         </div>
     );
+}
+
+PaymentForm.propTypes = {
+    paymentToEdit: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        invoice_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        project_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        paid_by_user_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        paid_to_user_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        payment_date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+        payment_method: PropTypes.string,
+        transaction_id: PropTypes.string,
+        status: PropTypes.string,
+        notes: PropTypes.string,
+    }),
+    onFormSubmit: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
 };

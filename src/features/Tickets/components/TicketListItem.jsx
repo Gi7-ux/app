@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { formatDate } from '../../../utils/dateFormatter'; // Assuming a date formatter utility
 
 const TicketListItem = ({ ticket, onSelect, userRole }) => {
@@ -50,6 +51,22 @@ const TicketListItem = ({ ticket, onSelect, userRole }) => {
             </div>
         </li>
     );
+};
+
+
+TicketListItem.propTypes = {
+    ticket: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        title: PropTypes.string,
+        category: PropTypes.string,
+        status: PropTypes.string,
+        priority: PropTypes.string,
+        updated_at: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+        user_name: PropTypes.string,
+        user_email: PropTypes.string,
+    }).isRequired,
+    onSelect: PropTypes.func.isRequired,
+    userRole: PropTypes.string.isRequired,
 };
 
 export default TicketListItem;

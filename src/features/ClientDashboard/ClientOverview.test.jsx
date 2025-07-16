@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ClientOverview } from './ClientOverview';
-import { AuthService } from '../../services/AuthService';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -48,7 +47,7 @@ describe('ClientOverview', () => {
 
     render(
       <MemoryRouter>
-        <ClientOverview setCurrentPage={() => {}} />
+        <ClientOverview setCurrentPage={() => { }} />
       </MemoryRouter>
     );
 
@@ -71,9 +70,9 @@ describe('ClientOverview', () => {
   it('calls setCurrentPage when quick action buttons are clicked', async () => {
     const setCurrentPageMock = vi.fn();
     fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockStats) })
-         .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }) // for activity
-         .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }); // for deadlines
-    
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }) // for activity
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }); // for deadlines
+
     render(
       <MemoryRouter>
         <ClientOverview setCurrentPage={setCurrentPageMock} />
@@ -99,12 +98,12 @@ describe('ClientOverview', () => {
       ok: false,
       json: () => Promise.resolve({ message: errorMessage }),
     })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }) // for activity, prevent further errors
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }); // for deadlines
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }) // for activity, prevent further errors
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) }); // for deadlines
 
     render(
       <MemoryRouter>
-        <ClientOverview setCurrentPage={() => {}} />
+        <ClientOverview setCurrentPage={() => { }} />
       </MemoryRouter>
     );
 

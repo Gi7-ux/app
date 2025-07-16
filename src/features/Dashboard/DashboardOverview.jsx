@@ -42,9 +42,7 @@ export const DashboardOverview = ({ setCurrentPage }) => {
             }
             try {
                 // Fetch stats
-                const statsResponse = await fetch('/api/dashboard/stats.php', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const statsResponse = await AuthService.fetchWithAuth('/api/dashboard/stats.php');
                 let statsData = null;
                 if (statsResponse.ok) {
                     statsData = await statsResponse.json();
@@ -57,13 +55,11 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                     ];
                     setStats(statsArray);
                 } else {
-                    setError('Failed to fetch stats.');
+                    setError('Failed to fetch data.');
                 }
 
                 // Fetch activity
-                const activityResponse = await fetch('/api/activity/get.php?limit=5', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const activityResponse = await AuthService.fetchWithAuth('/api/activity/get.php?limit=5');
                 let activityData = null;
                 if (activityResponse.ok) {
                     activityData = await activityResponse.json();
@@ -75,13 +71,12 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                         : [];
                     setActivity(processedActivity);
                 } else {
+                    setError('Failed to fetch data.');
                     setActivity([]);
                 }
 
                 // Fetch recent file uploads (live)
-                const filesResponse = await fetch('/api/files/recent.php?limit=5', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const filesResponse = await AuthService.fetchWithAuth('/api/files/recent.php?limit=5');
                 let filesData = null;
                 if (filesResponse.ok) {
                     filesData = await filesResponse.json();
@@ -98,11 +93,12 @@ export const DashboardOverview = ({ setCurrentPage }) => {
                         setRecentFileUploads([]);
                     }
                 } else {
+                    setError('Failed to fetch data.');
                     setRecentFileUploads([]);
                 }
 
             } catch (err) {
-                setError('An error occurred while fetching dashboard data.');
+                setError('Failed to fetch data.');
                 console.error(err);
             }
         };
@@ -131,7 +127,7 @@ export const DashboardOverview = ({ setCurrentPage }) => {
     return (
         <>
             <div className="content-header">
-                <h1>Dashboard Overview</h1>
+                <h1>Admin Dashboard</h1>
                 <p>Welcome back, Admin Architex! Here&apos;s a quick look at your platform activity.</p>
             </div>
 
@@ -163,13 +159,13 @@ export const DashboardOverview = ({ setCurrentPage }) => {
 
             <div className="main-grid">
                 <div className="card">
-                    <h3 className="card-header">Recent Activity</h3>
+                    <h3 className="card-header">Recent Platform Activity</h3>
                     <ul className="activity-list">
                         {activity.map((item, index) => (
                             <li key={item.id || `activity-${index}`} className="activity-item">
                                 <div className="timeline-dot"></div>
                                 <div className="activity-content">
-                                    <p>{item.action}</p>
+                                    <p>{item.user_name ? `${item.user_name} ${item.action}` : item.action}</p>
                                     <span className="time">{new Date(item.created_at).toLocaleDateString()}</span>
                                 </div>
                             </li>
